@@ -18,7 +18,7 @@ import java.util.Set;
 import com.google.common.base.Charsets;
 
 import coffee.dape.Dape;
-import coffee.dape.utils.FileOpUtils;
+import coffee.dape.utils.FUtils;
 import coffee.dape.utils.Logg;
 import coffee.dape.utils.TimeUtils;
 import coffee.khyonieheart.lilac.Lilac;
@@ -124,7 +124,7 @@ public class TomlConfig implements DapeConfig
 		Path corruptConfigPath = Dape.internalFilePath(CORRUPT_CONFIG_DIR);
 		
 		// Make sure the corrupt configurations path exists
-		FileOpUtils.createDirectories(corruptConfigPath);
+		FUtils.createDirectories(corruptConfigPath);
 		
 		int extraNumber = 1;
 		
@@ -136,7 +136,7 @@ public class TomlConfig implements DapeConfig
 		}
 		
 		Path finalPath = Dape.internalFilePath(CORRUPT_CONFIG_DIR + File.separator + fileName + ".yml");
-		FileOpUtils.copyFile(configFile,finalPath);
+		FUtils.copyFile(configFile,finalPath);
 		
 		if(!Files.exists(finalPath))
 		{
@@ -145,7 +145,7 @@ public class TomlConfig implements DapeConfig
 			return;
 		}
 		
-		FileOpUtils.delete(configFile);
+		FUtils.delete(configFile);
 		
 		if(Files.exists(configFile))
 		{
@@ -366,7 +366,7 @@ public class TomlConfig implements DapeConfig
 	
 	public void reset()
 	{
-		FileOpUtils.delete(configFile);
+		FUtils.delete(configFile);
 		firstTimeSetup();
 	}
 	
@@ -391,7 +391,7 @@ public class TomlConfig implements DapeConfig
 			return;
 		}
 		
-		FileOpUtils.createFile(configFile);
+		FUtils.createFile(configFile);
 		
 		try
 		{
@@ -431,6 +431,15 @@ public class TomlConfig implements DapeConfig
 	{
 		String[] keys = convertKeyToTomlKey(key);		
 		return get().hasKey(keys[0]) && get().hasKey(keys[1]);
+	}
+	
+
+	@Override
+	public Object getObject(String key)
+	{
+		if(!hasKey(key)) { Logg.warn("Could not retrieve '" + key + "'. Key not found!"); return null; }
+		String[] keys = convertKeyToTomlKey(key);
+		return get().getTable(keys[0]).get(keys[1]).get();
 	}
 
 	@Override
@@ -495,6 +504,22 @@ public class TomlConfig implements DapeConfig
 		@SuppressWarnings("unchecked")
 		List<TomlObject<?>> tomlList = (List<TomlObject<?>>) tomlObjArray.get();
 		return tomlList;
+	}
+	
+	@Override
+	public List<?> getList(String key)
+	{
+		if(!hasKey(key)) { Logg.warn("Could not retrieve '" + key + "'. Key not found!"); return Collections.emptyList(); }
+		List<TomlObject<?>> tomlList = getTomlArray(key);
+		if(tomlList.isEmpty()) { return Collections.emptyList(); }
+		List<Object> list = new ArrayList<>(tomlList.size());
+		
+		for(TomlObject<?> objArrItem : tomlList)
+		{
+			list.add(objArrItem.get());
+		}
+		
+		return list;
 	}
 
 	@Override

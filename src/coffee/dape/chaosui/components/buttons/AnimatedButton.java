@@ -155,6 +155,7 @@ public class AnimatedButton extends ChaosComponent
 		public void execute() throws Exception
 		{
 			if(this.builder.getViewers().isEmpty()) { this.stop(); return; }
+			if(!this.isEnabled() || clock.isCancelled()) { return; }
 			
 			for(UUID playerUUID : this.builder.getViewers())
 			{			

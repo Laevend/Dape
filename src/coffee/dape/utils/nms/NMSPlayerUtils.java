@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.v1_21_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_21_R4.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 import com.google.common.collect.Lists;
@@ -86,7 +86,7 @@ public class NMSPlayerUtils
 	public static void sendPacket(Packet<? extends PacketListener> packet,Player player)
 	{
 		EntityPlayer entityPlayer = NMSPlayerUtils.getNMSPlayer(player);
-		PlayerConnection connection = entityPlayer.c;
+		PlayerConnection connection = entityPlayer.f;
 		connection.a(packet);
 		//connection.a(packet,null);
 		Logg.verb("Packet " + packet.getClass().getSimpleName() + " sent to " + player.getName(),Logg.VerbGroup.NMSPLAYER);
@@ -144,7 +144,7 @@ public class NMSPlayerUtils
 	{
 		Bukkit.getOnlinePlayers().forEach(p -> 
 		{
-			if(!p.getUniqueId().equals(player.cv()))
+			if(!p.getUniqueId().equals(player.cG()))
 			{
 				sendPacket(packet,p);
 			}
@@ -176,7 +176,7 @@ public class NMSPlayerUtils
 	{
 		Bukkit.getOnlinePlayers().forEach(p -> 
 		{
-			if(!p.getUniqueId().equals(player.cv()))
+			if(!p.getUniqueId().equals(player.cG()))
 			{
 				sendPackets(packets,p);
 			}
@@ -210,7 +210,7 @@ public class NMSPlayerUtils
 	public static void updatePlayer(Player player)
 	{
 		EntityPlayer entityPlayer = ((CraftPlayer) player).getHandle();
-		int id = entityPlayer.an();
+		int id = entityPlayer.ao();
 		
 		//1.20.4
 		// an() is just the method that returns entity id 'o'
@@ -223,7 +223,7 @@ public class NMSPlayerUtils
 		//1.20.1
 		//int id = entityPlayer.af();
 		
-		UUID uuid = entityPlayer.cz();
+		UUID uuid = entityPlayer.cG();
 		
 		//1.20.4
 		//UUID uuid = entityPlayer.cw();
@@ -322,7 +322,7 @@ public class NMSPlayerUtils
 	public static GameProfile getGameProfile(Player p)
 	{
 		EntityPlayer entityPlayer = getNMSPlayer(p);
-		return entityPlayer.fX();
+		return entityPlayer.gi();
 		// return entityPlayer.fQ(); 1.20.2
 		// return entityPlayer.fM(); 1.20.1
 		//return entityPlayer.fI(); 1.19.4

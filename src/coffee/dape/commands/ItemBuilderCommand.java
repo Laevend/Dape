@@ -14,7 +14,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.RayTraceResult;
 
 import coffee.dape.cmdparsers.astral.annos.CommandEx;
-import coffee.dape.cmdparsers.astral.annos.Path;
+import coffee.dape.cmdparsers.astral.annos.CmdPath;
 import coffee.dape.cmdparsers.astral.annos.VMap;
 import coffee.dape.cmdparsers.astral.parser.ArgSet;
 import coffee.dape.cmdparsers.astral.parser.AstralExecutor;
@@ -53,24 +53,24 @@ public final class ItemBuilderCommand extends AstralExecutor
 		addPath("speed",CmdSender.PLAYER,new ArgSet().of("speed").of("<speed>",ArgTypes.INT).mapTo("speed"));
 	}
 	
-	@Path(name = "setScale",description = "Sets the players scale attribute",syntax = "/utils scale set <scale>",usage = "/utils scale set 5.57")
+	@CmdPath(name = "setScale",description = "Sets the players scale attribute",syntax = "/utils scale set <scale>",usage = "/utils scale set 5.57")
 	public void setScale(Player p,@VMap("scale") double scale)
 	{
 		// According to wiki, GENERIC_SCALE min-max values are as below
 		double clampedScale = MathUtils.clamp(0.0625d,16d,scale);
-		p.getAttribute(Attribute.GENERIC_SCALE).setBaseValue(scale);
+		p.getAttribute(Attribute.SCALE).setBaseValue(scale);
 		PrintUtils.info(p,"Scale changed to " + scaleFormat.format(clampedScale));
 	}
 	
-	@Path(name = "resetScale",description = "Resets the players scale",syntax = "/utils scale reset",usage = "/utils scale reset")
+	@CmdPath(name = "resetScale",description = "Resets the players scale",syntax = "/utils scale reset",usage = "/utils scale reset")
 	public void resetScale(Player p)
 	{
 		// According to wiki, GENERIC_SCALE min-max values are as below
-		p.getAttribute(Attribute.GENERIC_SCALE).setBaseValue(1d);
+		p.getAttribute(Attribute.SCALE).setBaseValue(1d);
 		PrintUtils.info(p,"Scale changed to " + scaleFormat.format(1d));
 	}
 	
-	@Path(name = "imageToMap",description = "Applies an image to a map",syntax = "/utils image-to-map <url>",usage = "/utils image-to-map https://www.SomeRandomImageWebsite.com/image.png")
+	@CmdPath(name = "imageToMap",description = "Applies an image to a map",syntax = "/utils image-to-map <url>",usage = "/utils image-to-map https://www.SomeRandomImageWebsite.com/image.png")
 	public void imageToMap(Player p,@VMap("url") String url)
 	{
 		PrintUtils.info(p,"Requesting image...");
@@ -99,7 +99,7 @@ public final class ItemBuilderCommand extends AstralExecutor
 		},null);
 	}
 	
-	@Path(name = "imageToMapResize",description = "Applies an image to a map and resizes it to fit",syntax = "/utils image-to-map <url> resize-to-map",usage = "/utils image-to-map https://www.SomeRandomImageWebsite.com/image.png resize-to-map")
+	@CmdPath(name = "imageToMapResize",description = "Applies an image to a map and resizes it to fit",syntax = "/utils image-to-map <url> resize-to-map",usage = "/utils image-to-map https://www.SomeRandomImageWebsite.com/image.png resize-to-map")
 	public void imageToMapResize(Player p,@VMap("url") String url)
 	{
 		PrintUtils.info(p,"Requesting image...");
@@ -130,7 +130,7 @@ public final class ItemBuilderCommand extends AstralExecutor
 		},null);
 	}
 	
-	@Path(name = "jump",description = "Jump to the block where you're looking",syntax = "/utils jump",usage = "/utils jump")
+	@CmdPath(name = "jump",description = "Jump to the block where you're looking",syntax = "/utils jump",usage = "/utils jump")
 	public void jump(Player p)
 	{
 		Location eyeLoc = p.getEyeLocation();
@@ -145,7 +145,7 @@ public final class ItemBuilderCommand extends AstralExecutor
 		p.teleport(teleportLoc);
 	}
 	
-	@Path(name = "speed",description = "Sets the players speed.",syntax = "/utils speed <speed>",usage = "/utils speed 2")
+	@CmdPath(name = "speed",description = "Sets the players speed.",syntax = "/utils speed <speed>",usage = "/utils speed 2")
 	public void setSpeed(Player p,@VMap("speed") int speed)
 	{
 		int newSpeed = MathUtils.clamp(0,20,speed);

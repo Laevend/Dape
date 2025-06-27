@@ -7,8 +7,8 @@ import java.util.Base64;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
-import org.bukkit.craftbukkit.v1_21_R1.inventory.CraftItemStack;
-import org.bukkit.craftbukkit.v1_21_R1.util.CraftMagicNumbers;
+import org.bukkit.craftbukkit.v1_21_R4.inventory.CraftItemStack;
+import org.bukkit.craftbukkit.v1_21_R4.util.CraftMagicNumbers;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemFlag;
@@ -24,6 +24,8 @@ import coffee.dape.utils.data.DataUtils;
  */
 public class ItemUtils
 {
+	private static final ItemStack ERROR_ITEMSTACK = ItemBuilder.of(Material.GREEN_CONCRETE).name("&aGeneric Item").lore().wrap("&cIf you are seeing this then something has gone wrong with loading the item stack that was to be here!").commit().setData("error_item",1).create();
+	
 	/**
 	 * Checks an item stack to see if it has a custom display name.
 	 * If it has a custom display name it will use that, if it does
@@ -218,7 +220,7 @@ public class ItemUtils
 		catch (Exception e)
 		{
 			Logg.error("Vertex could not encode base64 itemstack!",e);
-			return "";
+			return null;
 	    }
 	}
 	
@@ -242,9 +244,21 @@ public class ItemUtils
 		catch(Exception e)
 		{
 			Logg.error("Could not decode base64 itemstack!",e);
-			return new ItemStack(Material.GRASS_BLOCK);
+			return ERROR_ITEMSTACK.clone();
 		}
     }
+	
+	/**
+	 * Checks if this ItemStack was the result of an error.
+	 * <p>
+	 * When an operation goes wrong that involves setting an ItemStack, a fallback generic item is used instead
+	 * @param stack ItemStack to check
+	 * @return True if this ItemStack is an error item, false otherwise
+	 */
+	public static boolean isErrorItemStack(ItemStack stack)
+	{
+		return DataUtils.has("error_item",stack);
+	}
 	
 	/**
 	 * Creates an array of item stacks based on the amount needed
@@ -298,7 +312,7 @@ public class ItemUtils
 	public static net.minecraft.world.item.Item getNMSItem(ItemStack stack)
 	{
 		net.minecraft.world.item.ItemStack nmsItemStack = CraftItemStack.asNMSCopy(stack);
-		return nmsItemStack.g();
+		return nmsItemStack.h();
 	}
 	
 	public static net.minecraft.world.item.Item getNMSItem(Material material)

@@ -12,6 +12,8 @@ public interface DapeConfig
 	
 	
 	
+	public Object getObject(String key);
+	
 	public String getString(String key);
 	
 	public boolean getBoolean(String key);
@@ -23,6 +25,8 @@ public interface DapeConfig
 	public float getFloat(String key);
 	
 	public double getDouble(String key);
+	
+	public List<?> getList(String key);
 	
 	public List<String> getStringList(String key);
 	

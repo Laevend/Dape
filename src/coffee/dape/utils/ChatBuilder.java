@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.bukkit.craftbukkit.v1_21_R1.inventory.CraftItemStack;
+import org.bukkit.craftbukkit.v1_21_R4.inventory.CraftItemStack;
 import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
 
@@ -43,7 +43,7 @@ public class ChatBuilder
 	public ChatBuilder setMessage(String msg)
 	{
 		// Legacy is used for gradients and old-school & colours
-		BaseComponent msgComponent = TextComponent.fromLegacy(ColourUtils.transCol(msg));
+		BaseComponent msgComponent = TextComponent.fromLegacy(ColourUtils.translate(msg));
 		currentMessage.addExtra(msgComponent);
 		return this;
 	}
@@ -75,7 +75,7 @@ public class ChatBuilder
 	public ChatBuilder setHoverShowTextEvent(String hoverText)
 	{
 		ComponentBuilder comp = new ComponentBuilder();
-		comp.appendLegacy(ColourUtils.transCol(hoverText));
+		comp.appendLegacy(ColourUtils.translate(hoverText));
 		currentMessage.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,new Text(comp.create())));
 		return this;
 	}
@@ -86,7 +86,7 @@ public class ChatBuilder
 		
 		for(String s : hoverTextList)
 		{
-			comp.appendLegacy(ColourUtils.transCol(s));
+			comp.appendLegacy(ColourUtils.translate(s));
 		}
 		
 		currentMessage.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,new Text(comp.create())));
@@ -95,7 +95,7 @@ public class ChatBuilder
 	
 	public ChatBuilder setHoverShowEntityEvent(Entity e)
 	{
-		BaseComponent name = (e.getCustomName() != null ? TextComponent.fromLegacy(ColourUtils.transCol(e.getCustomName())) : TextComponent.fromLegacy(StringUtils.capitaliseFirstLetter(e.getType().toString().toLowerCase().replace("_"," "))));
+		BaseComponent name = (e.getCustomName() != null ? TextComponent.fromLegacy(ColourUtils.translate(e.getCustomName())) : TextComponent.fromLegacy(StringUtils.capitaliseFirstLetter(e.getType().toString().toLowerCase().replace("_"," "))));
 		String type = "minecraft:" + StringUtils.toSnakecase(e.getType().toString());
 		String id = e.getUniqueId().toString();
 		
@@ -113,7 +113,7 @@ public class ChatBuilder
 		net.minecraft.world.item.ItemStack nmsStack = CraftItemStack.asNMSCopy(stack);
 		//NBTTagCompound nbtTag = nmsStack.;
 		//String t = s.q(); (1.20.4)
-		String nbt = nmsStack.t();
+		String nbt = nmsStack.toString();
 		//System.out.println(t);
 		//System.out.println(s.toString());
 		ItemTag tag = ItemTag.ofNbt(nbt);

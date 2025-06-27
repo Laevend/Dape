@@ -51,6 +51,54 @@ public class ToggleButton extends ChaosComponent
 		initToggleButton(enabled,enabledStack,disabledStack);
 	}
 	
+	public ToggleButton(int slot,boolean enabled,String title)
+	{
+		super(slot,null,Type.TOGGLEABLE_BUTTON);
+		initToggleButton(enabled,
+				ItemBuilder.of(HeadUtils.REDSTONE_GREEN.clone())
+				.name(title,ColourUtils.TEXT)
+				.lore()
+				.append("Enabled",ColourUtils.TEXT_SUCCESS)
+				.append("")
+				.wrap(ColourUtils.applyColour("(Click me to toggle)",ColourUtils.TEXT))
+				.commit()
+				.setData(ToggleButton.DTAG,ToggleStatus.ENABLED.toString())
+				.create(),
+			ItemBuilder.of(HeadUtils.REDSTONE_RED.clone())
+				.name(title,ColourUtils.TEXT)
+				.lore()
+				.append("Disabled",ColourUtils.TEXT_ERROR)
+				.append("")
+				.wrap(ColourUtils.applyColour("(Click me to toggle)",ColourUtils.TEXT))
+				.commit()
+				.setData(ToggleButton.DTAG,ToggleStatus.DISABLED.toString())
+				.create());
+	}
+	
+	public ToggleButton(boolean enabled,String title)
+	{
+		super(null,Type.TOGGLEABLE_BUTTON);
+		initToggleButton(enabled,
+				ItemBuilder.of(HeadUtils.REDSTONE_GREEN.clone())
+				.name(title,ColourUtils.TEXT)
+				.lore()
+				.append("Enabled",ColourUtils.TEXT_SUCCESS)
+				.append("")
+				.wrap(ColourUtils.applyColour("(Click me to toggle)",ColourUtils.TEXT))
+				.commit()
+				.setData(ToggleButton.DTAG,ToggleStatus.ENABLED.toString())
+				.create(),
+			ItemBuilder.of(HeadUtils.REDSTONE_RED.clone())
+				.name(title,ColourUtils.TEXT)
+				.lore()
+				.append("Disabled",ColourUtils.TEXT_ERROR)
+				.append("")
+				.wrap(ColourUtils.applyColour("(Click me to toggle)",ColourUtils.TEXT))
+				.commit()
+				.setData(ToggleButton.DTAG,ToggleStatus.DISABLED.toString())
+				.create());
+	}
+	
 	private void initToggleButton(boolean enabled,ItemStack enabledStack_,ItemStack disabledStack_)
 	{
 		if(enabledStack_ == null)
@@ -155,6 +203,12 @@ public class ToggleButton extends ChaosComponent
 	{
 		if(enabled) { setAppearance(enabledStack); return; }
 		setAppearance(disabledStack);
+	}
+	
+	public boolean isEnabled()
+	{
+		ItemStack stack = getAppearance();
+		return DataUtils.get(DTAG,stack).asString().equals(ToggleStatus.ENABLED.toString());
 	}
 
 	@Override

@@ -8,7 +8,7 @@ import coffee.dape.utils.PlayerUtils;
 /**
  * @author Laeven
  * 
- * This class defines the offline Player type
+ * This class defines the offline Player argument type
  */
 public class OfflinePlayerType extends ArgumentType
 {

@@ -3,7 +3,6 @@ package coffee.dape.chaosui.test;
 import org.bukkit.inventory.InventoryView;
 
 import coffee.dape.chaosui.ChaosBuilder;
-import coffee.dape.chaosui.ChaosDecor.DecorType;
 import coffee.dape.chaosui.ChaosFactory.InvTemplate;
 import coffee.dape.chaosui.anno.ChaosGUI;
 import coffee.dape.chaosui.components.buttons.Button;
@@ -21,7 +20,7 @@ public class TestChaosPaginatorGuiBuilder extends ChaosBuilder //implements Dyna
 	{
 		setInterface(new Paginator(Paginator.wrapItemstacks(MaterialUtils.getListOfRandomMaterials(128))));
 		
-		setStaticComponent(new Button(4,ItemBuilder.of(HeadUtils.INFO_ICON.clone())
+		putStaticComponent(new Button(4,ItemBuilder.of(HeadUtils.INFO_ICON.clone())
 				.name("Information",ColourUtils.VISTA_BLUE)
 				.lore()
 				.wrap(ColourUtils.applyColour("Hello there this is some info. This is a test GUI for the paginator interface.",ColourUtils.TEXT))
@@ -29,9 +28,6 @@ public class TestChaosPaginatorGuiBuilder extends ChaosBuilder //implements Dyna
 				.create()));
 		
 		setNavigationBack("TestGUI",0);
-		
-		setDecor(DecorType.HEADER_CAVE,1,2,3,5,6,7,8);
-		setDecor(DecorType.FOOTER_NETHER,45,46,47,51,52,53);
 	}
 
 	@Override

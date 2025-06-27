@@ -4,13 +4,14 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import coffee.dape.Dape;
 import coffee.dape.utils.Logg;
+import coffee.dape.utils.clocks.absclocks.BukkitClock;
 
 /**
  * 
  * @author Laeven
  * A clock that will call {@link #execute()} after a specified interval until manually cancelled
  */
-public abstract class RepeatingClock extends AbstractBukkitClock
+public abstract class RepeatingClock extends BukkitClock
 {
 	/**
 	 * Creates a repeating clock

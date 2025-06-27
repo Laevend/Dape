@@ -1,8 +1,7 @@
 package coffee.dape;
 
 import java.io.File;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -16,19 +15,24 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import coffee.dape.chaosui.ChaosFactory;
 import coffee.dape.cmdparsers.astral.elevatedaccount.ElevatedAccountCtrl;
 import coffee.dape.cmdparsers.astral.parser.CommandFactory;
 import coffee.dape.config.Configurable;
-import coffee.dape.config.Configure;
 import coffee.dape.config.DapeConfig;
 import coffee.dape.config.YamlConfig;
+import coffee.dape.config.items.ConfigItem;
 import coffee.dape.feature.vaults.VaultCtrl;
 import coffee.dape.feature.wildfires.WildFiresCtrl;
 import coffee.dape.listeners.TestLis;
+import coffee.dape.playerdata.PlayerDataCtrl;
 import coffee.dape.utils.ChatUtils;
 import coffee.dape.utils.ColourUtils;
+import coffee.dape.utils.EntityUtils;
 import coffee.dape.utils.Logg;
 import coffee.dape.utils.MapUtils.ImageMapper;
+import coffee.dape.utils.MaterialUtils;
+import coffee.dape.utils.StringUtils;
 import coffee.dape.utils.data.DataUtils;
 import coffee.dape.utils.structs.Namespace;
 import coffee.dape.utils.tools.ClasspathCollector;
@@ -60,8 +64,12 @@ public final class Dape extends JavaPlugin
 		configureLogger();
 		ElevatedAccountCtrl.init();
 		CommandFactory.collectAndInitLocal();
+		ChaosFactory.init();
 		ChatUtils.init();
 		ImageMapper.load();
+		
+		MaterialUtils.collectBlocksAndItems();
+		EntityUtils.collectLivingEntities();
 		
 		initEndTime = System.currentTimeMillis();
 		
@@ -74,12 +82,46 @@ public final class Dape extends JavaPlugin
 		//Bukkit.getPluginManager().registerEvents(new SecretViewWarning(),this);
 		Bukkit.getPluginManager().registerEvents(new WildFiresCtrl(),this);
 		Bukkit.getPluginManager().registerEvents(new VaultCtrl(),this);
+		Bukkit.getPluginManager().registerEvents(new PlayerDataCtrl(),this);
+		Bukkit.getPluginManager().registerEvents(new ChaosFactory(),this);
+		
+		long ll = ElevatedAccountCtrl.Config.AUTH_TIME.get();
+		long l = (ll / 50) + 1;
+		
+//		ConfigItem<List<Long>> longListExample = new ConfigItem<>("test.long_list",List.of(55L,99L));
+//		ConfigItem<List<Boolean>> booleanListExample = new ConfigItem<>("test.boolean_list",List.of(true,false));
+//		ConfigItem<List<Integer>> intListExample = new ConfigItem<>("test.int_list",List.of(55,99));
+//		ConfigItem<List<Double>> doubleListExample = new ConfigItem<>("test.double_list",List.of(55.1d,99.1d));
+//		ConfigItem<List<Float>> floatListExample = new ConfigItem<>("test.float_list",List.of(55.55f,99.77f));
+//		ConfigItem<List<String>> stringListExample = new ConfigItem<>("test.string_list",List.of("Fuck","you"));
+//		
+//		longListExample.get().forEach(System.out::println);
+//		booleanListExample.get().forEach(System.out::println);
+//		intListExample.get().forEach(System.out::println);
+//		doubleListExample.get().forEach(System.out::println);
+//		floatListExample.get().forEach(System.out::println);
+//		stringListExample.get().forEach(System.out::println);
+//		
+//		ConfigItem<Long> longExample = new ConfigItem<>("test.long_test",30000000000000000L);
+//		ConfigItem<Boolean> booleanExample = new ConfigItem<>("test.boolean_test",false);
+//		ConfigItem<Integer> intExample = new ConfigItem<>("test.int_test",55);
+//		ConfigItem<Double> doubleExample = new ConfigItem<>("test.double_test",55.1d);
+//		ConfigItem<Float> floatExample = new ConfigItem<>("test.float_test",99.77f);
+//		ConfigItem<String> stringExample = new ConfigItem<>("test.string_test","bork");
+//		
+//		System.out.println(longExample.get());
+//		System.out.println(booleanExample.get());
+//		System.out.println(intExample.get());
+//		System.out.println(doubleExample.get());
+//		System.out.println(floatExample.get());
+//		System.out.println(stringExample.get());
 	}
 	
 	@Override
 	public void onDisable()
 	{
 		ImageMapper.save();
+		PlayerDataCtrl.saveAllPlayerData(true);
 	}
 	
 	private void createConfig()
@@ -94,63 +136,45 @@ public final class Dape extends JavaPlugin
 			Set<String> configurableClasses = collector.getClasspathsAssignableFrom(Configurable.class);
 			
 			for(String clazz : configurableClasses)
-			{			
+			{
 				Class<?> configurableClass = Class.forName(clazz,false,Dape.class.getClassLoader());
+				String className;
 				
-				for(Method method : configurableClass.getDeclaredMethods())
+				/**
+				 * Dape has a pattern practice of config items going in a nested 'Config' class.
+				 * 
+				 * This makes it easier to access from an IDE when typing and this method spends less
+				 * time combing through fields that are not of ConfigItem type.
+				 * 
+				 * Unfortunately it's not useful to have every configuration class called 'config' in the logs.
+				 * 
+				 * So we attempt to get the nested class name instead.
+				 */
+				if(configurableClass.getSimpleName().equals("Config"))
 				{
-					// Lambda and switch cases used in command logic is registered as a method
-					if(method.getName().contains("$")) { continue; }
+					String[] canonicalNameSplit = configurableClass.getCanonicalName().split("[.]");
+					className = StringUtils.capitaliseFirstLetter(canonicalNameSplit[canonicalNameSplit.length - 2]);
+				}
+				else
+				{
+					className = configurableClass.getSimpleName() + " S I M P L E";
+				}
+				
+				for(Field field : configurableClass.getDeclaredFields())
+				{
+					// Ignore fields that are not of ConfigItem
+					if(!field.getType().equals(ConfigItem.class)) { continue; }
 					
-					// Ignore methods with no path annotation
-					if(!method.isAnnotationPresent(Configure.class)) { continue; }
-					
-					// Static check
-					if(!Modifier.isStatic(method.getModifiers()))
-					{
-						Logg.error("Configurable class " + configurableClass.getSimpleName() + " has a defaults collection method (" + method.getName() + ") that is not static!");
-						Logg.Common.printFail(Logg.Common.Component.CONFIG,"Collecting",configurableClass.getSimpleName());
-						continue;
-					}
-					
-					// Invalid parameters check
-					if(method.getParameters().length != 0)
-					{
-						Logg.error("Configurable class " + configurableClass.getSimpleName() + " has a defaults collection method (" + method.getName() + ") with too many parameters!");
-						Logg.Common.printFail(Logg.Common.Component.CONFIG,"Collecting",configurableClass.getSimpleName());
-						continue;
-					}
-					
-					Class<?> methodParam = method.getReturnType();
-					
-					// Return void type check
-					if(methodParam.getName().equals("void"))
-					{
-						Logg.error("Configurable class " + configurableClass.getSimpleName() + " has a defaults collection method (" + method.getName() + ") with a void return type! Expected Map<String,Object>!");
-						Logg.Common.printFail(Logg.Common.Component.CONFIG,"Collecting",configurableClass.getSimpleName());
-						continue;
-					}
-					
-					// Return Map type check
-					if(!methodParam.getCanonicalName().equals(Map.class.getCanonicalName()))
-					{
-						Logg.error("Configurable class " + configurableClass.getSimpleName() + " has a defaults collection method (" + method.getName() + ") with an invalid return type! Expected Map<String,Object>, Got " + methodParam.getCanonicalName());
-						Logg.Common.printFail(Logg.Common.Component.CONFIG,"Collecting",configurableClass.getSimpleName());
-						continue;
-					}
-					
-					// Parameterised check
 					try
 					{
-						@SuppressWarnings("unchecked")
-						Map<String,Object> retrievedDefaults = (Map<String, Object>) method.invoke(null);
-						defaults.putAll(retrievedDefaults);
-						Logg.Common.printOk(Logg.Common.Component.CONFIG,"Collecting",configurableClass.getSimpleName());
+						ConfigItem<?> configItem = (ConfigItem<?>) field.get(null);
+						defaults.put(configItem.getKey(),configItem.getDefaultValue());
+						Logg.Common.printOk(Logg.Common.Component.CONFIG,"Collecting","(" + className + ") " + configItem.getKey());
 					}
 					catch(Exception e)
 					{
-						Logg.error("Configurable class " + configurableClass.getSimpleName() + " has a defaults collection method (" + method.getName() + ") with an invalid return parameterised types! Expected Map<String,Object>");
-						Logg.Common.printFail(Logg.Common.Component.CONFIG,"Collecting",configurableClass.getSimpleName());
+						Logg.error("Configurable class " + configurableClass.getSimpleName());
+						Logg.Common.printFail(Logg.Common.Component.CONFIG,"Collecting","(" + className + ") " + "???");
 					}
 				}
 			}
@@ -171,6 +195,20 @@ public final class Dape extends JavaPlugin
 	
 	private void configureLogger()
 	{
+		try
+		{
+			// Register all verbose groups
+			for(Field f : Logg.VerbGroup.class.getDeclaredFields())
+			{
+				Namespace verboseGroup = (Namespace) f.get(null);
+				Logg.registerVerboseLogGroup(verboseGroup);
+			}
+		}
+		catch(Exception e)
+		{
+			Logg.error("Error occured attempting to register logger verbose groups!",e);
+		}
+		
 		Logg.setHideVerbose(config.getBoolean("logger.hide_verbose"));
 		Logg.setHideWarnings(config.getBoolean("logger.hide_warnings"));
 		Logg.setHideErrors(config.getBoolean("logger.hide_errors"));
@@ -224,7 +262,7 @@ public final class Dape extends JavaPlugin
 		
 		sb.append("\n\n\n");
 		
-		Logg.raw(ColourUtils.transCol(sb.toString()));
+		Logg.raw(ColourUtils.translate(sb.toString()));
 	}
 	
 	public static final Dape instance()
@@ -312,13 +350,13 @@ public final class Dape extends JavaPlugin
 	@Override
 	public void saveDefaultConfig()
 	{
-		throw new UnsupportedOperationException("The default configuration is not supported!");
+		saveConfig();
 	}
 	
 	@Override
 	public FileConfiguration getConfig()
 	{
-		throw new UnsupportedOperationException("The default configuration is not supported! Please use 'Dape.instance().getConfigFile()");
+		throw new UnsupportedOperationException("The default configuration is not supported! Please use 'Dape.getConfigFile()");
 	}
 	
 	/**

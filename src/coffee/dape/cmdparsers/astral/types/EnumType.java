@@ -3,7 +3,7 @@ package coffee.dape.cmdparsers.astral.types;
 /**
  * @author Laeven
  * 
- * This class defines the Enum type
+ * This class defines the Enum argument type
  */
 public class EnumType<E extends Enum<E>> extends ArgumentType
 {

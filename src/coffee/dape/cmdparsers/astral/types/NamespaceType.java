@@ -5,7 +5,7 @@ import coffee.dape.utils.structs.Namespace;
 /**
  * @author Laeven
  * 
- * This class defines the UID4 type
+ * This class defines the Namespace argument type
  */
 public class NamespaceType extends ArgumentType
 {

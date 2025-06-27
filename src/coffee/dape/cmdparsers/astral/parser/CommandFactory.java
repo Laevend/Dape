@@ -7,22 +7,23 @@ import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
-import org.bukkit.craftbukkit.v1_21_R1.CraftServer;
+import org.bukkit.craftbukkit.v1_21_R4.CraftServer;
 
 import coffee.dape.Dape;
 import coffee.dape.cmdparsers.astral.annos.CommandEx;
 import coffee.dape.config.Configurable;
-import coffee.dape.config.Configure;
+import coffee.dape.config.items.ConfigItem;
 import coffee.dape.exception.InvalidCommandClassException;
 import coffee.dape.exception.MissingAnnotationException;
 import coffee.dape.utils.Logg;
+import coffee.dape.utils.MathUtils;
 import coffee.dape.utils.tools.ClasspathCollector;
 
 /**
  * @author Laeven
  * @since 1.0.0
  */
-public class CommandFactory implements Configurable
+public class CommandFactory
 {
 	private static InternalCommandMap internalCommandMap;
 	private static Map<String,AstralExecutor> commandMap = new HashMap<>();
@@ -198,14 +199,16 @@ public class CommandFactory implements Configurable
 		return CommandFactory.COMMAND_PREFIX + ".command.group." + groupName;
 	}
 	
-	public static final String CFG_DEFAULT_GROUP_PERMISSION_NEEDED = "astral.default_group_permission_needed";
-	public static final String CFG_FUZZY_SEARCH_SUGGESTION_RATIO = "astral.fuzzy_search_suggestion_ratio";
-	
-	@Configure
-	public static Map<String,Object> getDefaults()
+	public static class Config implements Configurable
 	{
-		return Map.of(
-				CFG_DEFAULT_GROUP_PERMISSION_NEEDED,false,
-				CFG_FUZZY_SEARCH_SUGGESTION_RATIO,70);
+		public static final ConfigItem<Boolean> DEFAULT_GROUP_PERMISSION_NEEDED = new ConfigItem<>("astral.default_group_permission_needed",false,"If the default group permission is required for regular players.");
+		public static final ConfigItem<Integer> FUZZY_SEARCH_SUGGESTION_RATIO = new ConfigItem<>("astral.fuzzy_search_suggestion_ratio",70,"Ratio of how close a suggestion is to what argument the player types to return that suggestion.")
+		{
+			@Override
+			public Integer clamp(Integer value)
+			{
+				return MathUtils.clamp(1,99,value);
+			}
+		};
 	}
 }

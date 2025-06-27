@@ -298,7 +298,7 @@ public class VNpc
 		
 		if(this.customName != null)
 		{
-			this.entity.setCustomName(ColourUtils.transCol(this.customName));
+			this.entity.setCustomName(ColourUtils.translate(this.customName));
 			this.entity.setCustomNameVisible(true);
 		}
 		
@@ -344,12 +344,12 @@ public class VNpc
 	public void printInfo(Player p)
 	{
 		PrintUtils.sendCenteredMessage(p,"NPC " + id.toString());
-		PrintUtils.raw(p,ColourUtils.transCol("&8Name: &a" + this.customName));
-		PrintUtils.raw(p,ColourUtils.transCol("&8World: &a" + this.world));
-		PrintUtils.raw(p,ColourUtils.transCol("&8Interaction: &a" + this.interactionType.toString().toLowerCase()));
-		PrintUtils.raw(p,ColourUtils.transCol("&8X: &a" + locationFormat.format(this.x)));
-		PrintUtils.raw(p,ColourUtils.transCol("&8Y: &a" + locationFormat.format(this.y)));
-		PrintUtils.raw(p,ColourUtils.transCol("&8Z: &a" + locationFormat.format(this.z)));
+		PrintUtils.raw(p,ColourUtils.translate("&8Name: &a" + this.customName));
+		PrintUtils.raw(p,ColourUtils.translate("&8World: &a" + this.world));
+		PrintUtils.raw(p,ColourUtils.translate("&8Interaction: &a" + this.interactionType.toString().toLowerCase()));
+		PrintUtils.raw(p,ColourUtils.translate("&8X: &a" + locationFormat.format(this.x)));
+		PrintUtils.raw(p,ColourUtils.translate("&8Y: &a" + locationFormat.format(this.y)));
+		PrintUtils.raw(p,ColourUtils.translate("&8Z: &a" + locationFormat.format(this.z)));
 		
 		PrintUtils.sendComp(p,new ChatBuilder("&8[&dTeleport to Villager&8]")
 				.setHoverShowTextEvent("&eClick this text to teleport")

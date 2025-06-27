@@ -5,7 +5,7 @@ import coffee.dape.utils.security.SecureString;
 /**
  * @author Laeven
  * 
- * This class defines the Secure String type.
+ * This class defines the Secure String argument type.
  * Secure strings are designed for holding sensitive arguments in memory without being vulnerable to a JVM dump
  */
 public class SecureStringType extends ArgumentType

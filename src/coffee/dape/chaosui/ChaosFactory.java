@@ -1,17 +1,15 @@
 package coffee.dape.chaosui;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.craftbukkit.v1_21_R1.inventory.CraftInventoryAnvil;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -20,7 +18,6 @@ import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
@@ -33,6 +30,17 @@ import coffee.dape.chaosui.components.ChaosRegion;
 import coffee.dape.chaosui.components.buttons.AnimatedButton;
 import coffee.dape.chaosui.components.buttons.TextInputButton;
 import coffee.dape.chaosui.events.ChaosNavigateToEvent;
+import coffee.dape.chaosui.instancedargs.SessionArgs1;
+import coffee.dape.chaosui.instancedargs.SessionArgs10;
+import coffee.dape.chaosui.instancedargs.SessionArgs2;
+import coffee.dape.chaosui.instancedargs.SessionArgs3;
+import coffee.dape.chaosui.instancedargs.SessionArgs4;
+import coffee.dape.chaosui.instancedargs.SessionArgs5;
+import coffee.dape.chaosui.instancedargs.SessionArgs6;
+import coffee.dape.chaosui.instancedargs.SessionArgs7;
+import coffee.dape.chaosui.instancedargs.SessionArgs8;
+import coffee.dape.chaosui.instancedargs.SessionArgs9;
+import coffee.dape.chaosui.instancedargs.SessionPlayer;
 import coffee.dape.chaosui.interfaces.paginator.PaginatorItem;
 import coffee.dape.chaosui.interfaces.paginator.PaginatorPanelItem;
 import coffee.dape.utils.ColourUtils;
@@ -55,6 +63,8 @@ public class ChaosFactory implements Listener
 	private static Set<UUID> chatInputMode = new HashSet<>();
 	private static BlankChaosHandler blankHandler = new BlankChaosHandler();
 	
+	private static Set<Class<?>> sessionArgumentInterfaces = new HashSet<>();
+	
 	// TODO add slot behaviour to give player items back when close
 	
 	/**
@@ -70,7 +80,27 @@ public class ChaosFactory implements Listener
 			cc.initClassNoArgs(classpath);
 		}
 		
-		ChaosDecor.init();
+		sessionArgumentInterfaces.add(SessionPlayer.class);
+		sessionArgumentInterfaces.add(SessionArgs1.class);
+		sessionArgumentInterfaces.add(SessionArgs2.class);
+		sessionArgumentInterfaces.add(SessionArgs3.class);
+		sessionArgumentInterfaces.add(SessionArgs4.class);
+		sessionArgumentInterfaces.add(SessionArgs5.class);
+		sessionArgumentInterfaces.add(SessionArgs6.class);
+		sessionArgumentInterfaces.add(SessionArgs7.class);
+		sessionArgumentInterfaces.add(SessionArgs8.class);
+		sessionArgumentInterfaces.add(SessionArgs9.class);
+		sessionArgumentInterfaces.add(SessionArgs10.class);
+	}
+	
+	public static void addSessionArgumentInterface(Class<?> sessionArgumentInterface)
+	{
+		sessionArgumentInterfaces.add(sessionArgumentInterface);
+	}
+	
+	public static Set<Class<?>> getSessionArgumentInterfaces()
+	{
+		return sessionArgumentInterfaces;
 	}
 	
 	/**
@@ -117,6 +147,9 @@ public class ChaosFactory implements Listener
 	 */
 	public static void open(Player player,String guiName)
 	{
+		Objects.requireNonNull(player,"Player cannot be null!");
+		Objects.requireNonNull(guiName,"GUI name cannot be null!");
+		
 		if(!guis.containsKey(guiName))
 		{
 			PrintUtils.actionBar(player,ColourUtils.applyColour("Error! GUI '" + guiName + "' doesn't exist!",ColourUtils.TEXT_ERROR));
@@ -132,7 +165,44 @@ public class ChaosFactory implements Listener
 			
 			if(cnte.isCancelled()) { return; }
 			
-			guis.get(guiName).build(player);
+			guis.get(guiName).buildWithNoArgs(player);
+		}
+		catch(Exception e1)
+		{
+			player.getOpenInventory().close();
+			Logg.error("A problem occured when player " + player.getName() + " opened GUI " + guiName,e1);
+			PrintUtils.error(player,"An error occured while opening this GUI! Please alert a member of staff!");
+		}
+	}
+	
+	/**
+	 * Opens a GUI for a player with arguments
+	 * @param player Player to open the GUI for
+	 * @param guiName Name of the GUI to open
+	 * @param arguments Arguments to pass to the GUI (for GUIs that have session set components)
+	 */
+	public static void open(Player player,String guiName,Object... arguments)
+	{
+		Objects.requireNonNull(player,"Player cannot be null!");
+		Objects.requireNonNull(guiName,"GUI name cannot be null!");
+		Objects.requireNonNull(arguments,"Arguments cannot be null!");
+		
+		if(!guis.containsKey(guiName))
+		{
+			PrintUtils.actionBar(player,ColourUtils.applyColour("Error! GUI '" + guiName + "' doesn't exist!",ColourUtils.TEXT_ERROR));
+			Logg.error("Player " + player.getName() + " attempted to open chaos gui '" + guiName + "' but it doesn't exist/did not initialise!");
+			return;
+		}
+		
+		// Prevents buggy GUI from having its items taken out of the handler fails
+		try
+		{
+			ChaosNavigateToEvent cnte = new ChaosNavigateToEvent(player,isGUI(player.getOpenInventory().getTitle()) ? guis.get(player.getOpenInventory().getTitle()) : null,guis.get(guiName),ChaosFactory.getSession(player).isNavigatingUsingBackButton());
+			Bukkit.getPluginManager().callEvent(cnte);
+			
+			if(cnte.isCancelled()) { return; }
+			
+			guis.get(guiName).buildWithArgs(player,arguments);
 		}
 		catch(Exception e1)
 		{
@@ -295,7 +365,7 @@ public class ChaosFactory implements Listener
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
-	public void onDrag(InventoryCloseEvent e)
+	public void onClose(InventoryCloseEvent e)
 	{
 		// The raw slot displays as -999 when clicking outside the inventory, don't ask me why
 		// Raw slot displays -1 when clicking on the edge of an inventory...
@@ -458,7 +528,7 @@ public class ChaosFactory implements Listener
 					aButton.restartClock();
 				}
 				
-				sess.setTempComponent(comp);
+				sess.setSessionComponent(comp);
 			}
 			
 			if(stacks.get(i) instanceof PaginatorPanelItem pItem)
@@ -467,9 +537,9 @@ public class ChaosFactory implements Listener
 				int buttonSlot = listOfRawSlots[rawSlotIterator] + 9;
 				
 				panelButton.setOccupyingSlot(buttonSlot);
-				sess.setTempComponent(panelButton);
+				sess.setSessionComponent(panelButton);
 				
-				view.setItem(buttonSlot,sess.getTempSlots().get(buttonSlot).getSlotComponent().getAppearance());
+				view.setItem(buttonSlot,sess.getSessionSlots().get(buttonSlot).getSlotComponent().getAppearance());
 			}
 			
 			rawSlotIterator++;
@@ -535,52 +605,7 @@ public class ChaosFactory implements Listener
 		{
 			this.slotCount = slotCount;
 		}
-	}
-	
-	/*
-	 * GUI's that require external world (GUI_World) as blocks are needed for GUI to work correctly
-	 */
-	
-	public static void createAnvilInventory(Player p)
-	{
-		//CraftInventoryCustom invc = (CraftInventoryCustom) Bukkit.createInventory(null,InventoryType.ANVIL,"Anvil");
-		
-		//org.bukkit.craftbukkit.inventory.CraftInventory inventory = new org.bukkit.craftbukkit.inventory.CraftInventoryAnvil(
-				          //access.getLocation(), this.inputSlots, this.resultSlots, this);
-		
-		//p.openInventory(null);
-		
-		CraftInventoryAnvil inv = (CraftInventoryAnvil) Bukkit.createInventory(null,InventoryType.ANVIL,"Anvil");
-		
-		//CraftInventoryCustom minv = new CraftInventoryCustom(p,InventoryType.ANVIL);
-		//CraftInventoryAnvil anvil = new CraftInventoryAnvil();
-		
-		try
-		{
-			Field f = CraftInventoryAnvil.class.getDeclaredField("location");
-			Location loc = (Location) f.get(inv);
-			loc.setX(1);
-			loc.setY(110);
-			loc.setZ(1);
-			
-			f = CraftInventoryAnvil.class.getDeclaredField("location");
-			loc = (Location) f.get(inv);
-			System.out.println("Loc X:" + loc.getBlockX() + " Y:" + loc.getBlockY() + " Z:" + loc.getBlockZ());
-			
-			p.openInventory(inv);
-			
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-		
-	}
-	
-	// GUI to view other players clusters you have perms for
-	// GUI to add players to permission holder
-	// GUI to add view permission holders
-	
+	}	
 	
 	public static class Common
 	{
@@ -624,6 +649,7 @@ public class ChaosFactory implements Listener
 		public static final String PLAYER_SETTINGS_CATEGORY = "Player Settings Category";
 		public static final String PLAYER_SERVER_VARIABLES = "Player Server Variables";
 		public static final String PLAYER_SERVER_VARIABLES_CATEGORY = "Player Server Vars Category";
+		public static final String PLAYER_PROFILE = "Player Profile";
 		
 		
 		/* Villager GUIs */
@@ -650,5 +676,13 @@ public class ChaosFactory implements Listener
 		/* Warp GUI */
 		
 		public static final String WORLD_WARP = "World Warp";
+		
+		/* Post Box */
+		
+		public static final String POST_BOX = "Post Box";
+		
+		/* Elevated Account */
+		
+		public static final String AUTHENTICATION_SETUP = "Authentication Setup";
 	}
 }

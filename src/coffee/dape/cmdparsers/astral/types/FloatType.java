@@ -3,7 +3,7 @@ package coffee.dape.cmdparsers.astral.types;
 /**
  * @author Laeven
  * 
- * This class defines the Integer type
+ * This class defines the float argument type
  */
 public class FloatType extends ArgumentType
 {	

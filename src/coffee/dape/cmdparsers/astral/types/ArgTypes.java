@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.bukkit.Keyed;
+import org.bukkit.Registry;
+
 import coffee.dape.Dape;
 import coffee.dape.utils.Logg;
 import coffee.dape.utils.interfaces.Initialiser;
@@ -36,10 +39,18 @@ public class ArgTypes implements Initialiser
 	public static final NamespaceType NAMESPACE = new NamespaceType();
 	public static final OnlinePlayerType ONLINE_PLAYER = new OnlinePlayerType();
 	public static final OfflinePlayerType OFFLINE_PLAYER = new OfflinePlayerType();
+	public static final PlayerType PLAYER = new PlayerType();
 	
+	// Converts an enum into its enum ArgumentType counterpart
 	public static <T extends Enum<T>> EnumType<T> ENUM(Class<T> enumObj)
 	{
 		return EnumType.of(enumObj);
+	}
+	
+	// Converts a Registry into its Registry ArgumentType counterpart
+	public static <R extends Keyed> RegistryType<R> REGISTRY(Registry<R> enumObj)
+	{
+		return RegistryType.of(enumObj);
 	}
 	
 	static
@@ -59,10 +70,14 @@ public class ArgTypes implements Initialiser
 			// Special case as enums can't be initialised via empty constructor. Enum class must be passed on init
 			String enumTypeClass = EnumType.class.getPackageName() + "." + EnumType.class.getSimpleName();
 			
+			// Special case as registry types can't be initialised via empty constructor. Registry class must be passed on init
+			String regTypeClass = RegistryType.class.getPackageName() + "." + RegistryType.class.getSimpleName();
+			
 			for(String argTypeClasspath : classpaths)
 			{
 				if(argTypeClasspath.equals(argumentTypeClass)) { continue; }
 				if(argTypeClasspath.equals(enumTypeClass)) { continue; }
+				if(argTypeClasspath.equals(regTypeClass)) { continue; }
 				
 				Class<?> argTypeClass = Class.forName(argTypeClasspath,true,Dape.class.getClassLoader());
 				Constructor<?> argTypeConstructor = argTypeClass.getConstructor();

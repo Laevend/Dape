@@ -134,7 +134,7 @@ public class ItemBuilderLegacy
     public ItemBuilderLegacy setName(String name) 
     {
     	ItemMeta stackMeta = stack.getItemMeta();
-        stackMeta.setDisplayName(ColourUtils.transCol("&r" + name));
+        stackMeta.setDisplayName(ColourUtils.translate("&r" + name));
         stack.setItemMeta(stackMeta);
         return this;
     }
@@ -254,7 +254,7 @@ public class ItemBuilderLegacy
     	
     	for(String loreString : loreStrings)
     	{
-    		loreList.add(ColourUtils.transCol("&r" + loreString));
+    		loreList.add(ColourUtils.translate("&r" + loreString));
     	}
 
         ItemMeta meta = stack.getItemMeta();
@@ -300,7 +300,7 @@ public class ItemBuilderLegacy
         
     	for(String loreString : loreStrings)
     	{
-    		currentLore.add(ColourUtils.transCol("&r" + loreString));
+    		currentLore.add(ColourUtils.translate("&r" + loreString));
     	}
         
         meta.setLore(currentLore);
@@ -374,20 +374,20 @@ public class ItemBuilderLegacy
         	{
         		sb.append(colourDec + word + " ");
         		currentLineLength = 0;
-        		loreList.add(ColourUtils.transCol(sb.toString()));
+        		loreList.add(ColourUtils.translate(sb.toString()));
         		sb.setLength(0);
         	}
         	else
         	{
         		currentLineLength = 0;
-        		loreList.add(ColourUtils.transCol(sb.toString()));
+        		loreList.add(ColourUtils.translate(sb.toString()));
         		sb.setLength(0);
         		sb.append(colourDec + word + " ");
         		currentLineLength += strippedWord.length() + 1;
         	}
         }
         
-        loreList.add(ColourUtils.transCol(sb.toString()));
+        loreList.add(ColourUtils.translate(sb.toString()));
         
         ItemMeta meta = stack.getItemMeta();
         meta.setLore(loreList);
@@ -422,7 +422,7 @@ public class ItemBuilderLegacy
         
         for(String newLoreLine : loreList)
         {
-        	currentLore.add(ColourUtils.transCol(newLoreLine));
+        	currentLore.add(ColourUtils.translate(newLoreLine));
         }
         
         meta.setLore(currentLore);
@@ -521,7 +521,7 @@ public class ItemBuilderLegacy
         if(index <= (currentLore.size() - 1))
         {
         	currentLore.remove(index);
-        	currentLore.add(index,ColourUtils.transCol("&r" + loreString));
+        	currentLore.add(index,ColourUtils.translate("&r" + loreString));
         }
         
         meta.setLore(currentLore);
@@ -547,7 +547,7 @@ public class ItemBuilderLegacy
         	{
         		for(String lore : loreStrings)
         		{
-        			newLore.add(ColourUtils.transCol("&r" + lore));
+        			newLore.add(ColourUtils.translate("&r" + lore));
         		}
         	}
         	

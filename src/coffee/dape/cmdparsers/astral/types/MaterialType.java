@@ -7,7 +7,7 @@ import coffee.dape.utils.MaterialUtils;
 /**
  * @author Laeven
  * 
- * This class defines the Material type
+ * This class defines the Material argument type
  */
 public class MaterialType extends ArgumentType
 {

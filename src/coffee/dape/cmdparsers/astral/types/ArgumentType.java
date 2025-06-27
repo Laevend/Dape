@@ -1,5 +1,7 @@
 package coffee.dape.cmdparsers.astral.types;
 
+import java.util.regex.Pattern;
+
 /**
  * @author Laeven
  * 
@@ -10,6 +12,7 @@ package coffee.dape.cmdparsers.astral.types;
 public abstract class ArgumentType
 {
 	private String typeName;
+	private static Pattern typeNameValidation = Pattern.compile("^[a-zA-Z0-9_-]*$");
 	
 	/**
 	 * Create an ArgumentType
@@ -17,7 +20,8 @@ public abstract class ArgumentType
 	 */
 	public ArgumentType(String typeName)
 	{
-		if(typeName == null || typeName.isEmpty() || typeName.isBlank()) { throw new IllegalArgumentException("Argument typeName cannot be null, empty, or blank!"); }
+		if(typeName == null || typeName.isEmpty() || typeName.isBlank()) { throw new IllegalArgumentException("Argument typeName cannot be null, empty, or blank! Got '" + typeName + "'"); }
+		if(!typeNameValidation.matcher(typeName).matches()) { throw new IllegalArgumentException("Argument typeName can only consist of letters, numbers, underscores and hyphens! Got '" + typeName + "'"); }
 		
 		this.typeName = "[VAR_TYPE:" + typeName.toUpperCase() + "]";
 	}

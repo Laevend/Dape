@@ -12,11 +12,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 
-import coffee.dape.Dape;
 import coffee.dape.cmdparsers.astral.flags.CFlag;
 import coffee.dape.utils.Logg;
 import coffee.dape.utils.PrintUtils;
-import coffee.dape.utils.StringUtils;
 import coffee.dape.utils.structs.CmdTree.Node;
 import coffee.dape.utils.structs.Pair;
 import xdrop.fuzzywuzzy.FuzzySearch;
@@ -106,7 +104,7 @@ public class CommandParser
 		if(!sender.hasPermission(permission) && !sender.hasPermission(CommandFactory.getGroupPermission(executor.getGroup())))
 		{
 			// If astral has been configured to allow command execution of commands in the default group without needing their permissions
-			if(Dape.getConfigFile().getBoolean(CommandFactory.CFG_DEFAULT_GROUP_PERMISSION_NEEDED) && executor.getGroup().equals("default"))
+			if(CommandFactory.Config.DEFAULT_GROUP_PERMISSION_NEEDED.get() && executor.getGroup().equals("default"))
 			{
 				break PermissionCheck;
 			}
@@ -162,7 +160,7 @@ public class CommandParser
 		// If not arguments were entered, just return
 		if(args.length == 0) { return args; }
 		
-		String argumentString = StringUtils.arrayToString(args);
+		String argumentString = String.join(" ",args);
 		long numOfQuotes = argumentString.chars().filter(v -> v == '\"').count();
 		
 		if(numOfQuotes == 0) { return args; }

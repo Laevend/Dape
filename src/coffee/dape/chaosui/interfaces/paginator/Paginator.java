@@ -161,7 +161,7 @@ public class Paginator extends ChaosInterface
 		// Must set parent
 		setParent(builder);
 		builder.defineHeaderRegion(ChaosRegion.Common.PAGINATOR_HEADER);
-		builder.defineRegion(new ChaosRegion(ChaosRegion.Common.PAGINATOR_BODY,pageSlots[0],pageSlots));
+		builder.defineRegion(new ChaosRegion(ChaosRegion.Common.PAGINATOR_BODY,pageSlots));
 		builder.defineFooterRegion(ChaosRegion.Common.PAGINATOR_FOOTER);
 		
 		setPaginatorButtonLocations();

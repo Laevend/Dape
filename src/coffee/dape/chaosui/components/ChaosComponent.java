@@ -92,6 +92,11 @@ public abstract class ChaosComponent implements PaginatorItem
 		return type;
 	}
 	
+	public void setSound(Sound sound,float pitch,float volume)
+	{
+		soundMixer = new SoundUtils().new SoundMixer(sound,pitch,volume);
+	}
+	
 	public void setSound(Sound sound,float pitch)
 	{
 		soundMixer = new SoundUtils().new SoundMixer(sound,pitch);

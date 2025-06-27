@@ -19,6 +19,9 @@ public class SoundUtils
 	public static final SoundMixer AXIS_CLAIM;
 	
 	public static final SoundMixer HOME_SET_DEFAULT;
+
+	public static final SoundMixer SWITCH_CLINK;
+	public static final SoundMixer DUSTING;
 	
 	static
 	{
@@ -69,6 +72,15 @@ public class SoundUtils
 		
 		HOME_SET_DEFAULT = new SoundUtils().new SoundMixer(Sound.BLOCK_AMETHYST_CLUSTER_BREAK,0.5f);
 		HOME_SET_DEFAULT.addSound(Sound.BLOCK_AMETHYST_CLUSTER_BREAK,2.0f,5);
+		
+		SWITCH_CLINK = new SoundUtils().new SoundMixer(Sound.BLOCK_COPPER_BULB_HIT,2.0f);
+		SWITCH_CLINK.addSound(Sound.BLOCK_COPPER_TRAPDOOR_OPEN,2.0f,0);
+		SWITCH_CLINK.addSound(Sound.BLOCK_COPPER_GRATE_HIT,1.5f,0);
+		
+		DUSTING = new SoundUtils().new SoundMixer(Sound.ITEM_BRUSH_BRUSHING_SAND,1.0f);
+		DUSTING.addSound(Sound.ITEM_BRUSH_BRUSHING_SAND,0.5f,0);
+		DUSTING.addSound(Sound.ITEM_BRUSH_BRUSHING_SAND,2.0f,4);
+		DUSTING.addSound(Sound.ITEM_BRUSH_BRUSHING_SAND,2.0f,8);
 	}
 	
 	public static void playSound(Player p,Sound s,float pitch)

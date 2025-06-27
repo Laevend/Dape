@@ -50,7 +50,7 @@ public class Toasts
 	{
 		public ToastSendClock()
 		{
-			super("Toast Sender Clock",2);
+			super("Toast Sender Clock",40);
 			start();
 		}
 

@@ -5,6 +5,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import coffee.dape.Dape;
 import coffee.dape.utils.Logg;
 import coffee.dape.utils.MathUtils;
+import coffee.dape.utils.clocks.absclocks.BukkitClock;
 
 /**
  * 
@@ -12,7 +13,7 @@ import coffee.dape.utils.MathUtils;
  * A clock that will automatically stop when the interval hits 0.
  * This clocks interval can be refilled before and during {@link #execute()}
  */
-public abstract class RefillableIntervalClock extends AbstractBukkitClock
+public abstract class RefillableIntervalClock extends BukkitClock
 {
 	private long maxDuration;
 	

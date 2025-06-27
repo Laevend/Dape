@@ -29,7 +29,7 @@ public abstract class JWriter<T>
 		{
 			writeJson();
 			
-			JsonUtils.toJsonFile(path,obj);
+			JUtils.write(path,obj,true);
 		}
 		catch(Exception e)
 		{

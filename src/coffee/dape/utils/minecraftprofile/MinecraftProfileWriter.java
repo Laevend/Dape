@@ -5,8 +5,8 @@ import java.util.Base64;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import coffee.dape.utils.json.JUtils;
 import coffee.dape.utils.json.JWriter;
-import coffee.dape.utils.json.JsonUtils;
 import coffee.dape.utils.minecraftprofile.data.MinecraftProfile;
 
 /**
@@ -78,7 +78,7 @@ public class MinecraftProfileWriter extends JWriter<MinecraftProfile>
 		
 		base64Textures.add(MinecraftProfileReader.TEXTURES,tex);
 		
-		String json = JsonUtils.toJsonString(base64Textures);
+		String json = JUtils.toJsonString(base64Textures,false);
 		String base64Json = Base64.getEncoder().encodeToString(json.getBytes());
 		
 		textures.addProperty(MinecraftProfileReader.VALUE,base64Json);

@@ -6,8 +6,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import coffee.dape.utils.json.JReader;
+import coffee.dape.utils.json.JUtils;
 import coffee.dape.utils.json.JsonDataType;
-import coffee.dape.utils.json.JsonUtils;
 import coffee.dape.utils.minecraftprofile.data.MinecraftProfile;
 
 /**
@@ -75,7 +75,7 @@ public class MinecraftProfileReader extends JReader<MinecraftProfile>
 		assertHas(VALUE,obj1).assertType(VALUE,obj1,JsonDataType.STRING);
 		
 		String valueJson = new String(Base64.getDecoder().decode(obj1.get(VALUE).getAsString()));
-		JsonObject base64Obj = JsonUtils.fromJsonString(valueJson);
+		JsonObject base64Obj = JUtils.toJsonObject(valueJson);
 		
 		if(obj1.has(SIGNATURE))
 		{

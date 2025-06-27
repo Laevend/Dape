@@ -18,7 +18,7 @@ import coffee.dape.chaosui.events.ChaosDragEvent;
  */
 public abstract class ChaosInterface
 {
-	private ChaosBuilder parent;
+	private ChaosBuilder parent = null;
 	private Type type;
 	
 	public ChaosInterface(Type type)
@@ -45,6 +45,7 @@ public abstract class ChaosInterface
 	{
 		DEFAULT,				// GUI with default Header, Body, and Footer regions
 		PAGINATOR,				// GUI with Header, Body, and Paginator Body regions
+		TABS,					// GUI with Header, Body, and Tab Body regions
 		CONFIRMATION_WINDOW,	// GUI that shows a confirmation window
 		BLANK,					// GUI with a blank interface as it will be manually handled (custom)
 	}

@@ -5,7 +5,7 @@ import coffee.dape.utils.structs.UID4;
 /**
  * @author Laeven
  * 
- * This class defines the UID4 type
+ * This class defines the UID4 argument type
  */
 public class UID4Type extends ArgumentType
 {

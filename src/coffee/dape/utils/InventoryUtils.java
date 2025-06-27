@@ -1,7 +1,6 @@
 package coffee.dape.utils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +15,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 
 import coffee.dape.Dape;
-import coffee.dape.utils.json.JsonUtils;
 
 /**
  * @author Laeven
@@ -290,24 +288,6 @@ public class InventoryUtils
 		{
 			return new ItemStack(Material.AIR);
 		}
-	}
-	
-	public static String toJson(Inventory inv)
-	{
-		 Map<Integer,String> inventoryMap = new HashMap<>();
-		 
-		 for(int i = 0; i < inv.getSize(); i++)
-		 {
-			 if(ItemUtils.isNullOrAir(inv.getItem(i)))
-			 {
-				 continue;
-			 }
-			 
-			 String serialiseItem = ItemUtils.toBase64(inv.getItem(i));
-			 inventoryMap.put(i,serialiseItem);			 
-		 }
-		 
-		 return JsonUtils.toJsonString(inventoryMap);
 	}
 	
 	/**

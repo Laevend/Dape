@@ -185,15 +185,15 @@ public class DataUtils
 		
 		switch(value)
 		{
-			case String val -> container.set(NSKey,PersistentDataType.STRING,val);
-			case Integer val -> container.set(NSKey,PersistentDataType.INTEGER,val);
-			case Boolean val -> container.set(NSKey,PersistentDataType.BOOLEAN,val);
-			case Float val -> container.set(NSKey,PersistentDataType.FLOAT,val);
-			case Long val -> container.set(NSKey,PersistentDataType.LONG,val);
-			case Double val -> container.set(NSKey,PersistentDataType.DOUBLE,val);
-			case Byte val -> container.set(NSKey,PersistentDataType.BYTE,val);
-			case Short val -> container.set(NSKey,PersistentDataType.SHORT,val);
-			case JsonObject val -> container.set(NSKey,PersistentDataType.STRING,gson.toJson(val));
+			case String val -> { container.set(NSKey,PersistentDataType.STRING,val); return; }
+			case Integer val -> { container.set(NSKey,PersistentDataType.INTEGER,val); return; }
+			case Boolean val -> { container.set(NSKey,PersistentDataType.BOOLEAN,val); return; }
+			case Float val -> { container.set(NSKey,PersistentDataType.FLOAT,val); return; }
+			case Long val -> { container.set(NSKey,PersistentDataType.LONG,val); return; }
+			case Double val -> { container.set(NSKey,PersistentDataType.DOUBLE,val); return; }
+			case Byte val -> { container.set(NSKey,PersistentDataType.BYTE,val); return; }
+			case Short val -> { container.set(NSKey,PersistentDataType.SHORT,val); return; }
+			case JsonObject val -> { container.set(NSKey,PersistentDataType.STRING,gson.toJson(val)); return; }
 			default -> {}
 		}
 		
@@ -204,9 +204,9 @@ public class DataUtils
 		
 		switch(firstArrayValue)
 		{
-			case Integer val -> container.set(NSKey,PersistentDataType.INTEGER_ARRAY,(int[]) value);
-			case Long val -> container.set(NSKey,PersistentDataType.LONG_ARRAY,(long[]) value);
-			case Byte val -> container.set(NSKey,PersistentDataType.BYTE_ARRAY,(byte[]) value);
+			case Integer val -> { container.set(NSKey,PersistentDataType.INTEGER_ARRAY,(int[]) value); return; }
+			case Long val -> { container.set(NSKey,PersistentDataType.LONG_ARRAY,(long[]) value); return; }
+			case Byte val -> { container.set(NSKey,PersistentDataType.BYTE_ARRAY,(byte[]) value); return; }
 			default -> throw new IllegalArgumentException("Unsupported value: " + firstArrayValue);
 		}
 	}

@@ -4,8 +4,9 @@ import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import coffee.dape.Dape;
+import coffee.dape.cmdparsers.astral.annos.CmdPath;
 import coffee.dape.cmdparsers.astral.annos.CommandEx;
-import coffee.dape.cmdparsers.astral.annos.Path;
 import coffee.dape.cmdparsers.astral.annos.VMap;
 import coffee.dape.cmdparsers.astral.elevatedaccount.ElevatedAccountCtrl;
 import coffee.dape.cmdparsers.astral.parser.ArgSet;
@@ -74,7 +75,7 @@ public class TestCommand extends AstralExecutor
 				.of("<say message>",ArgTypes.BOOLEAN).mapTo("sayMsg"));
 	}
 	
-	@Path(name = "dunk no arg",description = "A command to test no arguments",syntax = "/test",usage = "/test")
+	@CmdPath(name = "dunk no arg",description = "A command to test no arguments",syntax = "/test",usage = "/test")
 	public boolean first(CommandSender sender,String[] args)
 	{
 		PrintUtils.info(sender,"Hello there! NO ARGS!");
@@ -90,7 +91,7 @@ public class TestCommand extends AstralExecutor
 		return true;
 	}
 	
-	@Path(name = "print message",description = "A command to test static arguments",syntax = "/test add something else",usage = "/test add something else")
+	@CmdPath(name = "print message",description = "A command to test static arguments",syntax = "/test add something else",usage = "/test add something else")
 	public boolean printMessage(CommandSender sender,String[] args)
 	{
 		System.out.println("sender null? " + sender == null);
@@ -98,35 +99,35 @@ public class TestCommand extends AstralExecutor
 		return true;
 	}
 	
-	@Path(name = "say yeet",description = "A command to test a single static argument",syntax = "/test yeet",usage = "/test yeet")
+	@CmdPath(name = "say yeet",description = "A command to test a single static argument",syntax = "/test yeet",usage = "/test yeet")
 	public boolean sayYeet(CommandSender sender,String[] args)
 	{
 		PrintUtils.info(sender,"Yeet!");
 		return true;
 	}
 	
-	@Path(name = "hidden",description = "A command that should be hidden",syntax = "/test hidden",usage = "/test hidden",hidden = true)
+	@CmdPath(name = "hidden",description = "A command that should be hidden",syntax = "/test hidden",usage = "/test hidden",hidden = true)
 	public boolean hiddenCommand(CommandSender sender,String[] args)
 	{
 		PrintUtils.info(sender,"You found a hidden command!");
 		return true;
 	}
 	
-	@Path(name = "elevated",description = "A command that should request TOTP code",syntax = "/test elevated",usage = "/test elevated")
+	@CmdPath(name = "elevated",description = "A command that should request TOTP code",syntax = "/test elevated",usage = "/test elevated")
 	public boolean elevatedCommand(CommandSender sender,String[] args)
 	{
 		PrintUtils.info(sender,"This is an elevated command!");
 		return true;
 	}
 	
-	@Path(name = "all worlds",description = "Displays a list of worlds for testing.",syntax = "/test extra dynamic <worlds> <item> <amount>",usage = "/test extra dynamic world1 oak_planks 5")
+	@CmdPath(name = "all worlds",description = "Displays a list of worlds for testing.",syntax = "/test extra dynamic <worlds> <item> <amount>",usage = "/test extra dynamic world1 oak_planks 5")
 	public boolean allWorlds(CommandSender sender,String[] args)
 	{
 		PrintUtils.info(sender,"A list of worlds goes here or somethin'");
 		return true;
 	}
 	
-	@Path(name = "long string test",description = "A test command for multiple long string arguments.",syntax = "/test large strings <fullname> <description> <age>",usage = "/test large strings \"Zackary Stacks\" \"Some dude who is tired all the time\" 12")
+	@CmdPath(name = "long string test",description = "A test command for multiple long string arguments.",syntax = "/test large strings <fullname> <description> <age>",usage = "/test large strings \"Zackary Stacks\" \"Some dude who is tired all the time\" 12")
 	public boolean longStringTest(CommandSender sender,String[] args)
 	{
 		PrintUtils.info(sender,"Fullname is " + args[2]);
@@ -135,7 +136,7 @@ public class TestCommand extends AstralExecutor
 		return true;
 	}
 	
-	@Path(name = "repeat msg",description = "A test for string var arguments in the same suggestion list as static arguments. Prints your message <amount> number of times.",syntax = "/test <message> <amount>",usage = "/test \"Some random message for testing\" 3")
+	@CmdPath(name = "repeat msg",description = "A test for string var arguments in the same suggestion list as static arguments. Prints your message <amount> number of times.",syntax = "/test <message> <amount>",usage = "/test \"Some random message for testing\" 3")
 	public boolean repeatMsg(CommandSender sender,String[] args)
 	{
 		for(int i = 0; i < Integer.parseInt(args[1]); i++)
@@ -146,14 +147,14 @@ public class TestCommand extends AstralExecutor
 		return true;
 	}
 	
-	@Path(name = "suggestion based on arg",description = "A test for dependant arguments.",syntax = "/test item <number> <?> hum this boi",usage = "/test item 1 NETHER hum this boi")
+	@CmdPath(name = "suggestion based on arg",description = "A test for dependant arguments.",syntax = "/test item <number> <?> hum this boi",usage = "/test item 1 NETHER hum this boi")
 	public boolean suggestionBasedOnArg(CommandSender sender,String[] args)
 	{
 		PrintUtils.info(sender,"Suggestions... so many");
 		return true;
 	}
 	
-	@Path(name = "mapped args",description = "A test for mapped args",syntax = "/test mappedArgs <material> <amount> <message> <say message>",usage = "/test mappedArgs sand 5 \"Hi there\" true")
+	@CmdPath(name = "mapped args",description = "A test for mapped args",syntax = "/test mappedArgs <material> <amount> <message> <say message>",usage = "/test mappedArgs sand 5 \"Hi there\" true")
 	public boolean mapArgs(Player p,@VMap("sayMsg") boolean say,@VMap("amount") int a,@VMap("mat") Material m,@VMap("msg") String s)
 	{
 		PrintUtils.info(p,"Aye!");

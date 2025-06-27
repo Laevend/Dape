@@ -36,7 +36,7 @@ public class VaultCtrl implements Listener
 		Block vaultBlock = e.getClickedBlock();
 		Vault vaultData = (Vault) vaultBlock.getBlockData();
 		
-		if(unInteractableStates.contains(vaultData.getTrialSpawnerState())) { return; }
+		if(unInteractableStates.contains(vaultData.getVaultState())) { return; }
 		
 		//if(!DataUtils.has(DT_VAULT_REUSE,vault)) { return; }
 		String commandWorldName;

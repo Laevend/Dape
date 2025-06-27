@@ -16,7 +16,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import com.google.gson.JsonObject;
 
 import coffee.dape.Dape;
-import coffee.dape.utils.FileOpUtils;
+import coffee.dape.utils.FUtils;
 import coffee.dape.utils.Logg;
 import coffee.dape.utils.MojangUtils;
 import coffee.dape.utils.PlayerUtils;
@@ -77,7 +77,7 @@ public class MinecraftProfileCtrl implements Listener
 		}
 		
 		Path minecraftProfileDir = Dape.internalFilePath(MC_PROFILE_CACHE_DIR);
-		FileOpUtils.createDirectories(minecraftProfileDir);
+		FUtils.createDirectories(minecraftProfileDir);
 		
 		if(minecraftProfileDir.toFile().listFiles().length == 0)
 		{
@@ -106,7 +106,7 @@ public class MinecraftProfileCtrl implements Listener
 	 */
 	private static MinecraftProfile getNewMinecraftProfile(UUID uuid)
 	{
-		if(!MojangUtils.isApiOK()) { Logg.fatal("Cannot request new minecraft profile as Mojang Public API is down!"); return null; }
+		if(!MojangUtils.isApiOnline()) { Logg.fatal("Cannot request new minecraft profile as Mojang Public API is down!"); return null; }
 		
 		JsonObject data = MojangUtils.requestProfileFromAPI(uuid,true);
 		
@@ -149,7 +149,7 @@ public class MinecraftProfileCtrl implements Listener
 	
 	private static UUID getNewUUIDLookup(String playerName)
 	{
-		if(!MojangUtils.isApiOK()) { Logg.fatal("Cannot request UUID lookup as Mojang Public API is down!"); return null; }
+		if(!MojangUtils.isApiOnline()) { Logg.fatal("Cannot request UUID lookup as Mojang Public API is down!"); return null; }
 		
 		JsonObject data = MojangUtils.requestUUIDFromAPI(playerName);
 		if(data == null) { Logg.error("API returned 404!"); return null; }
@@ -200,7 +200,7 @@ public class MinecraftProfileCtrl implements Listener
 			}
 			
 			// Cache profile while we're here for quicker lookups for the same player
-			if(MojangUtils.isApiOK())
+			if(MojangUtils.isApiOnline())
 			{
 				MinecraftProfile mp = MinecraftProfileCtrl.getPlayerProfile(playerUUID,false);
 				profiles.put(playerUUID,mp);
@@ -209,7 +209,7 @@ public class MinecraftProfileCtrl implements Listener
 			return true;
 		}
 		
-		if(!MojangUtils.isApiOK()) { Logg.fatal("Cannot confirm if " + playerUUID.toString() + " is a real player UUID as Mojang Public API is down!"); return false; }
+		if(!MojangUtils.isApiOnline()) { Logg.fatal("Cannot confirm if " + playerUUID.toString() + " is a real player UUID as Mojang Public API is down!"); return false; }
 		
 		// Perform API lookup
 		MinecraftProfile mp = MinecraftProfileCtrl.getPlayerProfile(playerUUID,false);
@@ -243,7 +243,7 @@ public class MinecraftProfileCtrl implements Listener
 			return true;
 		}
 		
-		if(!MojangUtils.isApiOK()) { Logg.fatal("Cannot confirm if " + playerName + " is a real player name as Mojang Public API is down!"); return false; }
+		if(!MojangUtils.isApiOnline()) { Logg.fatal("Cannot confirm if " + playerName + " is a real player name as Mojang Public API is down!"); return false; }
 		
 		// Perform API lookup
 		UUID uuid = getNewUUIDLookup(playerName);

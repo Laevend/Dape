@@ -62,8 +62,8 @@ public class ChatAction extends VNpcAction
 		}
 		else
 		{
-			PrintUtils.raw(p,ColourUtils.transCol(dialogue.get(index).getFormattedDialogue()));
-			int length = ChatColor.stripColor(ColourUtils.transCol(dialogue.get(index).getFormattedDialogue())).length();
+			PrintUtils.raw(p,ColourUtils.translate(dialogue.get(index).getFormattedDialogue()));
+			int length = ChatColor.stripColor(ColourUtils.translate(dialogue.get(index).getFormattedDialogue())).length();
 			
 			if((index + 1) >= dialogue.size())
 			{
@@ -129,7 +129,7 @@ public class ChatAction extends VNpcAction
 		
 		public String getFormattedDialogue()
 		{
-			return ColourUtils.transCol("&8[" + GradientUtils.applyGradient(name,LinearGradient.of("#56ab2f","#a8e063")) + "&8] " + ColourUtils.applyColour(dialogue,"#cfdef3"));
+			return ColourUtils.translate("&8[" + GradientUtils.applyGradient(name,LinearGradient.of("#56ab2f","#a8e063")) + "&8] " + ColourUtils.applyColour(dialogue,"#cfdef3"));
 		}
 	}
 	

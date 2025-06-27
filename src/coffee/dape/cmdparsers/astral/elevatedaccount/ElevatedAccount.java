@@ -3,6 +3,7 @@ package coffee.dape.cmdparsers.astral.elevatedaccount;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -10,20 +11,33 @@ import java.util.UUID;
 
 import org.bukkit.entity.Player;
 
-import coffee.dape.Dape;
+import com.google.gson.JsonObject;
+
+import coffee.dape.cmdparsers.astral.elevatedaccount.ElevatedAccountCtrl.AuthMethod;
 import coffee.dape.cmdparsers.astral.elevatedaccount.authmethod.AuthenticationMethod;
+import coffee.dape.cmdparsers.astral.elevatedaccount.authmethod.MicrosoftAuthMethod;
+import coffee.dape.cmdparsers.astral.elevatedaccount.authmethod.YubiKeyAuthMethod;
+import coffee.dape.cmdparsers.astral.elevatedaccount.authmethod.email.EmailOTPAuthMethod;
+import coffee.dape.cmdparsers.astral.elevatedaccount.authmethod.staticpin.StaticPinAuthMethod;
+import coffee.dape.cmdparsers.astral.elevatedaccount.authmethod.temppin.TempPinAuthMethod;
+import coffee.dape.cmdparsers.astral.elevatedaccount.authmethod.totp.TimedOTPAuthMethod;
+import coffee.dape.exception.DeserialiseException;
 import coffee.dape.exception.IllegalMethodCallException;
+import coffee.dape.exception.SerialiseException;
 import coffee.dape.utils.Logg;
 import coffee.dape.utils.MathUtils;
 import coffee.dape.utils.PlayerUtils;
 import coffee.dape.utils.PrintUtils;
 import coffee.dape.utils.clocks.RefillableIntervalClock;
+import coffee.dape.utils.json.PersistJson;
 import coffee.dape.utils.security.Bouncer;
 import coffee.dape.utils.security.HashingUtils;
 import coffee.dape.utils.security.ObfuscatedRandBaseEncoder;
 import coffee.dape.utils.security.SecureByteArray;
+import coffee.dape.utils.security.SecureString;
+import coffee.dape.utils.tools.Deserialise;
 
-public final class ElevatedAccount extends RefillableIntervalClock
+public final class ElevatedAccount extends RefillableIntervalClock implements PersistJson
 {
 	private final UUID owner;
 	
@@ -38,14 +52,27 @@ public final class ElevatedAccount extends RefillableIntervalClock
 	private SecureByteArray authLvl = ObfuscatedRandBaseEncoder.encode(0);
 	private SecureByteArray checksum = null;
 	
-	protected ElevatedAccount(final UUID owner,final List<AuthenticationMethod> authMethods)
+	protected ElevatedAccount(final UUID owner,final SecureString tempPin)
 	{
 		// divided by 1000 as the cooldownInMili time here is in miliseconds but we want ticks so divide by 50 and add 1 as if cooldownInMili does not divide perfectly, we can't have part of a tick
-		super("ElevatedAccount_" + PlayerUtils.getName(owner),(Dape.getConfigFile().getLong(ElevatedAccountCtrl.ConfigKey.AUTH_TIME) / 50) + 1);
+		super("ElevatedAccount_" + PlayerUtils.getName(owner),(ElevatedAccountCtrl.Config.AUTH_TIME.get() / 50) + 1);
 		this.owner = owner;
 		this.creationDate = ObfuscatedRandBaseEncoder.encode(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
-		this.cooldownInMili = ObfuscatedRandBaseEncoder.encode(Dape.getConfigFile().getLong(ElevatedAccountCtrl.ConfigKey.AUTH_TIME));
-		this.authMethods = Collections.unmodifiableList(authMethods);
+		this.cooldownInMili = ObfuscatedRandBaseEncoder.encode(ElevatedAccountCtrl.Config.AUTH_TIME.get());
+		
+		List<AuthenticationMethod> methods = new ArrayList<>();
+		
+		methods.add(new TempPinAuthMethod(tempPin));
+		
+		if(ElevatedAccountCtrl.Config.LOCKED_AUTH_METHODS.get())
+		{
+			this.authMethods = Collections.unmodifiableList(methods);
+		}
+		else
+		{
+			this.authMethods = methods;
+		}
+		
 		this.locked = ObfuscatedRandBaseEncoder.encode(ElevatedAccountCtrl.FALSE);
 		this.markedAsDeleted = ObfuscatedRandBaseEncoder.encode(ElevatedAccountCtrl.FALSE);
 	}
@@ -53,13 +80,92 @@ public final class ElevatedAccount extends RefillableIntervalClock
 	protected ElevatedAccount(final UUID owner,final long creationDate,final boolean locked,final List<AuthenticationMethod> authMethods)
 	{
 		// divided by 1000 as the cooldownInMili time here is in miliseconds but we want ticks so divide by 50 and add 1 as if cooldownInMili does not divide perfectly, we can't have part of a tick
-		super("ElevatedAccount_" + PlayerUtils.getName(owner),(Dape.getConfigFile().getLong(ElevatedAccountCtrl.ConfigKey.AUTH_TIME) / 50) + 1);
+		super("ElevatedAccount_" + PlayerUtils.getName(owner),(ElevatedAccountCtrl.Config.AUTH_TIME.get() / 50) + 1);
 		this.owner = owner;
 		this.creationDate = ObfuscatedRandBaseEncoder.encode(creationDate);
-		this.cooldownInMili = ObfuscatedRandBaseEncoder.encode(Dape.getConfigFile().getLong(ElevatedAccountCtrl.ConfigKey.AUTH_TIME));
-		this.authMethods = Collections.unmodifiableList(authMethods);
+		this.cooldownInMili = ObfuscatedRandBaseEncoder.encode(ElevatedAccountCtrl.Config.AUTH_TIME.get());
+		
+		if(ElevatedAccountCtrl.Config.LOCKED_AUTH_METHODS.get())
+		{
+			this.authMethods = Collections.unmodifiableList(authMethods);
+		}
+		else
+		{
+			this.authMethods = authMethods;
+		}
+		
 		this.locked = locked ? ObfuscatedRandBaseEncoder.encode(ElevatedAccountCtrl.TRUE) : ObfuscatedRandBaseEncoder.encode(ElevatedAccountCtrl.FALSE);
 		this.markedAsDeleted = ObfuscatedRandBaseEncoder.encode(ElevatedAccountCtrl.FALSE);
+	}
+	
+	protected ElevatedAccount(final JsonObject obj) throws DeserialiseException
+	{
+		// divided by 1000 as the cooldownInMili time here is in miliseconds but we want ticks so divide by 50 and add 1 as if cooldownInMili does not divide perfectly, we can't have part of a tick
+		super("ElevatedAccount_Unknown",(ElevatedAccountCtrl.Config.AUTH_TIME.get() / 50) + 1);
+		
+		this.owner = Deserialise.uuid(Deserialise.assertAndGetProperty(OWNER,Deserialise.Type.STRING,obj));
+		this.creationDate = ObfuscatedRandBaseEncoder.encode(Deserialise.assertAndGetProperty(CREATION_DATE,Deserialise.Type.NUMBER,obj).getAsLong());
+		this.cooldownInMili = ObfuscatedRandBaseEncoder.encode(ElevatedAccountCtrl.Config.AUTH_TIME.get());
+		
+		List<AuthenticationMethod> methods = new ArrayList<>();
+		
+		JsonObject tempPin = Deserialise.assertAndGetPropertyIfHas(TEMP_PIN_AUTH,Deserialise.Type.JSON_OBJECT,obj,new JsonObject());
+		JsonObject staticPin = Deserialise.assertAndGetPropertyIfHas(STATIC_PIN_AUTH,Deserialise.Type.JSON_OBJECT,obj,new JsonObject());
+		JsonObject timedTOTP = Deserialise.assertAndGetPropertyIfHas(TOTP_AUTH,Deserialise.Type.JSON_OBJECT,obj,new JsonObject());
+		JsonObject emailOTP = Deserialise.assertAndGetPropertyIfHas(EMAIL_AUTH,Deserialise.Type.JSON_OBJECT,obj,new JsonObject());
+		JsonObject yubiKey = Deserialise.assertAndGetPropertyIfHas(YUBIKEY_AUTH,Deserialise.Type.JSON_OBJECT,obj,new JsonObject());
+		JsonObject microsoftAuth = Deserialise.assertAndGetPropertyIfHas(MICROSOFT_AUTH,Deserialise.Type.JSON_OBJECT,obj,new JsonObject());
+		
+		if(tempPin.size() != 0)
+		{
+			TempPinAuthMethod meth = new TempPinAuthMethod(tempPin);
+			if(!meth.isMarkedForRemoval()) { methods.add(meth); }
+		}
+		
+		if(staticPin.size() != 0)
+		{
+			StaticPinAuthMethod meth = new StaticPinAuthMethod(staticPin);
+			if(!meth.isMarkedForRemoval()) { methods.add(meth); }
+		}
+		
+		if(timedTOTP.size() != 0)
+		{
+			TimedOTPAuthMethod meth = new TimedOTPAuthMethod(timedTOTP);
+			if(!meth.isMarkedForRemoval()) { methods.add(meth); }
+		}
+		
+		if(emailOTP.size() != 0)
+		{
+			EmailOTPAuthMethod meth = new EmailOTPAuthMethod(emailOTP);
+			if(!meth.isMarkedForRemoval()) { methods.add(meth); }
+		}
+		
+		if(yubiKey.size() != 0)
+		{
+			YubiKeyAuthMethod meth = new YubiKeyAuthMethod(yubiKey);
+			if(!meth.isMarkedForRemoval()) { methods.add(meth); }
+		}
+		
+		if(microsoftAuth.size() != 0)
+		{
+			MicrosoftAuthMethod meth = new MicrosoftAuthMethod(microsoftAuth);
+			if(!meth.isMarkedForRemoval()) { methods.add(meth); }
+		}		
+		
+		if(ElevatedAccountCtrl.Config.LOCKED_AUTH_METHODS.get())
+		{
+			this.authMethods = Collections.unmodifiableList(methods);
+		}
+		else
+		{
+			this.authMethods = methods;
+		}
+		
+		this.locked = Deserialise.assertAndGetProperty(LOCKED,Deserialise.Type.BOOLEAN,obj).getAsBoolean() ? ObfuscatedRandBaseEncoder.encode(ElevatedAccountCtrl.TRUE) : ObfuscatedRandBaseEncoder.encode(ElevatedAccountCtrl.FALSE);
+		this.markedAsDeleted = Deserialise.assertAndGetProperty(MARKED_AS_DELETED,Deserialise.Type.BOOLEAN,obj).getAsBoolean() ? ObfuscatedRandBaseEncoder.encode(ElevatedAccountCtrl.TRUE) : ObfuscatedRandBaseEncoder.encode(ElevatedAccountCtrl.FALSE);
+		
+		// In deserialising, we need to deserialise the owner before passing it. Here we re-set the clocks name to the accounts owner.
+		this.setClockName("ElevatedAccount_" + PlayerUtils.getName(owner));
 	}
 
 	public final UUID getOwner()
@@ -82,7 +188,7 @@ public final class ElevatedAccount extends RefillableIntervalClock
 		return pendingCommand;
 	}
 	
-	public void setPendingCommand(PendingCommand pendingCommand) throws IllegalMethodCallException
+	public final void setPendingCommand(PendingCommand pendingCommand) throws IllegalMethodCallException
 	{
 		Bouncer.haltAllBut(coffee.dape.cmdparsers.astral.parser.AstralExecutor.class);
 		
@@ -219,7 +325,8 @@ public final class ElevatedAccount extends RefillableIntervalClock
 	@Override
 	public void execute() throws Exception
 	{
-		Bouncer.haltAllBut(coffee.dape.cmdparsers.astral.elevatedaccount.ElevatedAccount.class);
+		Bouncer.haltAllBut(coffee.dape.cmdparsers.astral.elevatedaccount.ElevatedAccount.class,
+				coffee.dape.utils.clocks.RefillableIntervalClock.class);
 		
 		// Clear the pending command when auth period expires to prevent a command loitering in memory
 		pendingCommand = new PendingCommand(null,null,null,null,null,new SecureRandom().nextLong());
@@ -269,9 +376,24 @@ public final class ElevatedAccount extends RefillableIntervalClock
 		return ObfuscatedRandBaseEncoder.peek(markedAsDeleted) == ElevatedAccountCtrl.TRUE;
 	}
 	
-	public List<AuthenticationMethod> getAuthMethods()
+	public final List<AuthenticationMethod> getAuthMethods()
 	{
 		return authMethods;
+	}
+	
+	/**
+	 * Marks the temporary auth method for removal (if it exists)
+	 */
+	public final void markTempPinForRemoval()
+	{
+		for(int i = 0; i < authMethods.size(); i++)
+		{
+			if(authMethods.get(i).getAuthType() == AuthMethod.TEMP_PIN)
+			{
+				authMethods.get(i).markForRemoval();
+				break;
+			}
+		}
 	}
 	
 	/**
@@ -297,7 +419,9 @@ public final class ElevatedAccount extends RefillableIntervalClock
 	}
 	
 	/**
-	 * Overwrite variables with garbage data when account is garbage collected
+	 * Overwrite variables with garbage data when account is garbage collected.
+	 * <p>
+	 * Also used when account adding & removing is locked and the account is marked for deletion.
 	 */
 	public final void clear()
 	{
@@ -326,5 +450,59 @@ public final class ElevatedAccount extends RefillableIntervalClock
 		{
 			meth.clear();
 		}
+	}
+
+	public static final String OWNER = "owner";
+	public static final String CREATION_DATE = "creation_date";
+	public static final String LOCKED = "locked";
+	public static final String MARKED_AS_DELETED = "marked_as_deleted";
+	
+	public static final String TEMP_PIN_AUTH = "temp_pin_auth";
+	public static final String STATIC_PIN_AUTH = "static_pin_auth";
+	public static final String TOTP_AUTH = "totp_auth";
+	public static final String EMAIL_AUTH = "email_auth";
+	public static final String YUBIKEY_AUTH = "yubikey_auth";
+	public static final String MICROSOFT_AUTH = "microsoft_auth";
+	
+	@Override
+	public JsonObject serialise() throws SerialiseException
+	{
+		JsonObject obj = new JsonObject();
+		
+		obj.addProperty(OWNER,this.owner.toString());
+		obj.addProperty(CREATION_DATE,ObfuscatedRandBaseEncoder.peek(creationDate));
+		obj.addProperty(LOCKED,isLocked());
+		obj.addProperty(MARKED_AS_DELETED,isMarkedAsDeleted());
+		
+		for(AuthenticationMethod authMethod : this.authMethods)
+		{
+			if(authMethod.isMarkedForRemoval())
+			{
+				Logg.info("Auth method '" + authMethod.getAuthType().toString().toLowerCase() + "' marked for removal.");
+				continue;
+			}
+			
+			switch(authMethod.getAuthType())
+			{
+				case TEMP_PIN -> obj.add(TEMP_PIN_AUTH,((PersistJson) authMethod).serialise());
+				case STATIC_PIN -> obj.add(STATIC_PIN_AUTH,((PersistJson) authMethod).serialise());
+				case TIMED_OTP -> obj.add(TOTP_AUTH,((PersistJson) authMethod).serialise());
+				case EMAIL_OTP -> obj.add(EMAIL_AUTH,((PersistJson) authMethod).serialise());
+				case YUBI_KEY -> obj.add(YUBIKEY_AUTH,((PersistJson) authMethod).serialise());
+				case MICROSOFT_AUTH -> obj.add(MICROSOFT_AUTH,((PersistJson) authMethod).serialise());
+				default ->
+				{
+					throw new SerialiseException("Unknown auth type! '" + authMethod.getAuthType() + "'");
+				}
+			}
+		}
+		
+		return obj;
+	}
+
+	@Override
+	public void deserialise(JsonObject obj) throws DeserialiseException
+	{
+		throw new UnsupportedOperationException("Due to declared final variables deserialise happens in constructor 'ElevatedAccount(final JsonObject obj)'");
 	}
 }

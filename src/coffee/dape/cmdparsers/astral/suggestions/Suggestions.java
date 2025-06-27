@@ -81,16 +81,16 @@ public class Suggestions
 		{
 			suggestionLists.put(list.getSuggestionListNamespace(),uList);
 			return;
-		}
-		
-		if(list instanceof ConditionalSuggestionList cList)
+		} 
+		else if(list instanceof ConditionalSuggestionList cList)
 		{
 			conditionalSuggestionLists.put(list.getSuggestionListNamespace(),cList);
+			return;
 		}
-		
-		if(list instanceof PlayerSuggestionList pList)
+		else if(list instanceof PlayerSuggestionList pList)
 		{
 			playerSuggestionLists.put(list.getSuggestionListNamespace(),pList);
+			return;
 		}
 		
 		Logg.error("Could not store suggestion list " + list.getSuggestionListNamespace() + " as it's not of type " +
@@ -437,7 +437,6 @@ public class Suggestions
 		    {
 		    	for(Namespace group : Logg.getVerboseGroups())
 		    	{
-		    		Logg.error("Adding g " + group.toSimpleString());
 		    		add(group.toSimpleString());
 		    	}
 		    }

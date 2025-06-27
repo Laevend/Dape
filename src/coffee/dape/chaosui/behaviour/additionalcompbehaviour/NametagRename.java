@@ -34,7 +34,7 @@ public class NametagRename
 			if(!nameTag.getItemMeta().hasDisplayName()) { PrintUtils.actionBar(e.getWhoClicked(),"&cThis name tag has no name!"); return; }
 			
 			ItemStack stack = e.getView().getItem(e.getRawSlot());
-			String newName = ColourUtils.transCol(nameTag.getItemMeta().getDisplayName());
+			String newName = ColourUtils.translate(nameTag.getItemMeta().getDisplayName());
 			String oldName = stack.getItemMeta().hasDisplayName() ? stack.getItemMeta().getDisplayName() : MaterialUtils.getNameFromMaterial(stack.getType());
 			
 			ChaosChangeNameEvent ccne = new ChaosChangeNameEvent(e.getView(),e.getBuilder(),stack,oldName,newName,(Player) e.getWhoClicked(),e.getRawSlot());

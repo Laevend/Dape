@@ -3,6 +3,8 @@ package coffee.dape.utils.structs;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+import org.bukkit.NamespacedKey;
+
 /**
  * 
  * @author Laeven
@@ -50,6 +52,12 @@ public final class Namespace
 		throw new IllegalArgumentException("Namespace string '" + namespaceString + "' could not be converted to a namespace as it is not correctly formatted!");
 	}
 	
+	public static final Namespace fromNamespacedKey(NamespacedKey key)
+	{
+		Objects.requireNonNull(key,"NamespacedKey string name cannot be null!");
+		return new Namespace(key.getNamespace(),key.getKey());
+	}
+	
 	private Namespace(String namespaceName,String namespaceKey)
 	{
 		Objects.requireNonNull(namespaceName,"Namespace name cannot be null!");
@@ -87,6 +95,15 @@ public final class Namespace
 	public String toSimpleString()
 	{
 		return name + ":" + key;
+	}
+	
+	/**
+	 * Convenient method to convert a namespace to a namespaced key for compatibility
+	 * @return NamespacedKey
+	 */
+	public NamespacedKey toNamespacedKey()
+	{
+		return new NamespacedKey(name,key);
 	}
 	
 	@Override

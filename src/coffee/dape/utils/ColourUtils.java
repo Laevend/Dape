@@ -13,15 +13,92 @@ public class ColourUtils
 {	
 	// The colour code char used to represent a colour code in the following character
 	public static final char COLOUR_CODE_CHARACTER = '&';
+	public static final char ESCAPE_CHARACTER = '\\';
 	
 	/**
-	 * Translates '&' symbols to section symbol/section sign
-	 * @param s String to format
-	 * @return String with colour code symbols translated
+	 * A modified version of md5's {@link ChatColor#translateAlternateColorCodes(char, String)}
+	 * <p>
+	 * This variant allows for the use of the escape character '\' to negate an '&' sign being
+	 * turned into a colour.
+	 * @param s String to translate
+	 * @return String with translated colour codes from & to section symbol.
 	 */
-	public static String transCol(String s)
+	public static String translate(String s)
 	{
-		return ChatColor.translateAlternateColorCodes(COLOUR_CODE_CHARACTER,s);
+		char[] arr = s.toCharArray();
+		int finalStringLength = arr.length;
+		
+		for(int i = 0; i < arr.length - 1; i++)
+		{
+			// Check previous character is an escape character, this character is a colour code character and that the next character is a colour code
+			if(arr[i == 0 ? 0 : i-1] == ESCAPE_CHARACTER && arr[i] == COLOUR_CODE_CHARACTER && ChatColor.ALL_CODES.indexOf(arr[i + 1]) > -1)
+			{
+				// Remove backslash and shuffle array contents down
+				for(int j = (i - 1); j < arr.length - 1; j++)
+				{
+					arr[j] = arr[j + 1];
+				}
+				
+				finalStringLength--;
+				
+				// Skip over the '&'
+				// The next iteration will also skip the colour code
+				i++;
+				continue;
+			}
+			
+			if(arr[i] == COLOUR_CODE_CHARACTER && ChatColor.ALL_CODES.indexOf(arr[i + 1]) > -1)
+			{
+				arr[i] = ChatColor.COLOR_CHAR;
+				arr[i + 1] = Character.toLowerCase(arr[i + 1]);
+			}
+		}
+		
+		// Cheaper to return if no change occurred
+		if(finalStringLength == arr.length)
+		{
+			return new String(arr);
+		}
+		
+		// Trim to remove empty array space at the end in the event of shuffles taking place when encountering an escape character
+		// trim() will not work as it may remove intentional white space, as does stripTrailing();
+		return new String(arr).substring(0,finalStringLength);
+	}
+	
+	/**
+	 * A modified version of md5's {@link ChatColor#translateAlternateColorCodes(char, String)}
+	 * <p>
+	 * This variant allows for the use of the escape character '\' to negate an '&' sign being
+	 * turned into a colour.
+	 * <p>
+	 * This variant will not remove escape characters when they are found!
+	 * @param s String to translate
+	 * @return String with translated colour codes from & to section symbol.
+	 */
+	public static String translateNoEscapeRemoval(String s)
+	{
+		char[] arr = s.toCharArray();
+		
+		for(int i = 0; i < arr.length - 1; i++)
+		{
+			// Check previous character is an escape character, this character is a colour code character and that the next character is a colour code
+			if(arr[i == 0 ? 0 : i-1] == ESCAPE_CHARACTER && arr[i] == COLOUR_CODE_CHARACTER && ChatColor.ALL_CODES.indexOf(arr[i + 1]) > -1)
+			{
+				// Skip over the '&'
+				// The next iteration will also skip the colour code
+				i++;
+				continue;
+			}
+			
+			if(arr[i] == COLOUR_CODE_CHARACTER && ChatColor.ALL_CODES.indexOf(arr[i + 1]) > -1)
+			{
+				arr[i] = ChatColor.COLOR_CHAR;
+				arr[i + 1] = Character.toLowerCase(arr[i + 1]);
+			}
+		}
+		
+		// Trim to remove empty array space at the end in the event of shuffles taking place when encountering an escape character
+		return new String(arr);
 	}
 	
 	/**

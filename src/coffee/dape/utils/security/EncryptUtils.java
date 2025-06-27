@@ -22,7 +22,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 
 import coffee.dape.Dape;
-import coffee.dape.utils.FileOpUtils;
+import coffee.dape.utils.FUtils;
 import coffee.dape.utils.Logg;
 
 public final class EncryptUtils
@@ -57,7 +57,7 @@ public final class EncryptUtils
 			try
 			{
 				keyStore.load(null,password.toCharArray());
-				FileOpUtils.createDirectoriesForFile(keyStoreFile);
+				FUtils.createDirectoriesForFile(keyStoreFile);
 				loaded = true;
 			}
 			catch (Exception e)
@@ -111,7 +111,7 @@ public final class EncryptUtils
 	public static void saveKeyStore(String password)
 	{
 		Path f = Dape.internalFilePath("keys" + File.separator + "store");
-		FileOpUtils.createDirectories(f);
+		FUtils.createDirectories(f);
 		
 		try(FileOutputStream fos = new FileOutputStream(keyStoreFile.toFile()))
 		{

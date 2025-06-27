@@ -2,6 +2,7 @@ package coffee.dape.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -357,6 +359,31 @@ public class WorldUtils
 		w.getPlayers().forEach(v -> v.teleport(spawnLocationOfMainWorld));
 		Arrays.asList(w.getLoadedChunks()).forEach(v -> v.unload());
 		Bukkit.unloadWorld(w,saveWorldOnUnload);
+	}
+	
+	public static String getDefaultWorldName()
+	{
+		Properties serverProp = new Properties();
+		String levelName = null;
+		
+		try(InputStream is = Files.newInputStream(Paths.get("server.properties")))
+		{
+			serverProp.load(is);
+			levelName = serverProp.getProperty("level-name");
+			is.close();
+			
+			if(levelName == null || levelName.isEmpty() || levelName.isBlank())
+			{
+				Logg.warn("Could not fetch default world name from server.properties! Defaulting to 'world'");
+				levelName = "world";
+			}
+		}
+		catch(Exception e)
+		{
+			Logg.error("Error reading server.properties!",e);
+		}
+		
+		return "world";
 	}
 	
 	/**

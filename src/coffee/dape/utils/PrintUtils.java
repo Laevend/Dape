@@ -81,7 +81,7 @@ public class PrintUtils
 	 */
 	public static void info(HumanEntity entity,String message)
 	{
-		entity.sendMessage(ColourUtils.transCol(Logg.DAPE_PREFIX + "&r " + message));
+		entity.sendMessage(ColourUtils.translate(Logg.DAPE_PREFIX + "&r " + message));
 	}
 	
 	/**
@@ -104,7 +104,7 @@ public class PrintUtils
 	 */
 	public static void info(Player player,String message)
 	{
-		player.sendMessage(ColourUtils.transCol(Logg.DAPE_PREFIX + "&r ") + ColourUtils.applyColour(message,ColourUtils.TEXT));
+		player.sendMessage(ColourUtils.translate(Logg.DAPE_PREFIX + "&r ") + ColourUtils.applyColour(message,ColourUtils.TEXT));
 	}
 	
 	/**
@@ -127,7 +127,7 @@ public class PrintUtils
 	 */
 	public static void warn(HumanEntity entity,String message)
 	{
-		entity.sendMessage(ColourUtils.transCol(Logg.DAPE_PREFIX + "&r " + message));
+		entity.sendMessage(ColourUtils.translate(Logg.DAPE_PREFIX + "&r " + message));
 	}
 	
 	/**
@@ -150,7 +150,7 @@ public class PrintUtils
 	 */
 	public static void warn(Player player,String message)
 	{
-		player.sendMessage(ColourUtils.transCol(Logg.DAPE_PREFIX + "&r ") + ColourUtils.applyColour(message,ColourUtils.TEXT_WARNING));
+		player.sendMessage(ColourUtils.translate(Logg.DAPE_PREFIX + "&r ") + ColourUtils.applyColour(message,ColourUtils.TEXT_WARNING));
 	}
 	
 	/**
@@ -173,7 +173,7 @@ public class PrintUtils
 	 */
 	public static void error(HumanEntity entity,String message)
 	{
-		entity.sendMessage(ColourUtils.transCol(Logg.DAPE_PREFIX + "&r " + message));
+		entity.sendMessage(ColourUtils.translate(Logg.DAPE_PREFIX + "&r " + message));
 	}
 	
 	/**
@@ -196,7 +196,7 @@ public class PrintUtils
 	 */
 	public static void error(Player player,String message)
 	{
-		player.sendMessage(ColourUtils.transCol(Logg.DAPE_PREFIX + "&r ") + ColourUtils.applyColour(message,ColourUtils.TEXT_ERROR));
+		player.sendMessage(ColourUtils.translate(Logg.DAPE_PREFIX + "&r ") + ColourUtils.applyColour(message,ColourUtils.TEXT_ERROR));
 	}
 	
 	/**
@@ -219,7 +219,7 @@ public class PrintUtils
 	 */
 	public static void success(HumanEntity entity,String message)
 	{
-		entity.sendMessage(ColourUtils.transCol(Logg.DAPE_PREFIX + "&r " + message));
+		entity.sendMessage(ColourUtils.translate(Logg.DAPE_PREFIX + "&r " + message));
 	}
 	
 	/**
@@ -242,7 +242,7 @@ public class PrintUtils
 	 */
 	public static void success(Player player,String message)
 	{
-		player.sendMessage(ColourUtils.transCol(Logg.DAPE_PREFIX + "&r ") + ColourUtils.applyColour(message,ColourUtils.TEXT_SUCCESS));
+		player.sendMessage(ColourUtils.translate(Logg.DAPE_PREFIX + "&r ") + ColourUtils.applyColour(message,ColourUtils.TEXT_SUCCESS));
 	}
 	
 	/**
@@ -289,7 +289,7 @@ public class PrintUtils
 	 */
 	public static void actionBar(Player player,String message)
 	{
-		player.spigot().sendMessage(ChatMessageType.ACTION_BAR,TextComponent.fromLegacy(ColourUtils.transCol(message)));
+		player.spigot().sendMessage(ChatMessageType.ACTION_BAR,TextComponent.fromLegacy(ColourUtils.translate(message)));
 	}
 	
 	/**
@@ -332,7 +332,7 @@ public class PrintUtils
 		player.spigot().sendMessage(
 				ChatMessageType.ACTION_BAR,
 				TextComponent.fromLegacy(
-						ColourUtils.transCol(
+						ColourUtils.translate(
 								ColourUtils.applyColour(
 										Logg.DAPE_PREFIX + " " + EnvVariables.getVar(HardVariables.PERMISSION_ERROR_MSG),ColourUtils.TEXT_ERROR))));
 	}
@@ -343,7 +343,7 @@ public class PrintUtils
 	 * @param comp Components to send
 	 */
 	public static void sendComp(HumanEntity entity,BaseComponent... comp)
-	{
+	{		
 		entity.spigot().sendMessage(comp);
 	}
 	
@@ -411,7 +411,7 @@ public class PrintUtils
 	 */
 	public static void sendTitle(Player player,String title,String sub)
 	{
-		player.sendTitle(ColourUtils.transCol(title),ColourUtils.transCol(sub),10,70,20);
+		player.sendTitle(ColourUtils.translate(title),ColourUtils.translate(sub),10,70,20);
 	}
 	
 	/**
@@ -465,7 +465,7 @@ public class PrintUtils
 	 */
 	public static void sendTitle(Player player,String title,String sub,int fadeIn,int stay,int fadeOut)
 	{
-		player.sendTitle(ColourUtils.transCol(title),ColourUtils.transCol(sub),fadeIn,stay,fadeOut);
+		player.sendTitle(ColourUtils.translate(title),ColourUtils.translate(sub),fadeIn,stay,fadeOut);
 	}
 	
 	/**
@@ -594,7 +594,7 @@ public class PrintUtils
 			sb.append(" ");
 		}
 		
-		return ColourUtils.transCol("&8&m" + sb.toString() + "&r&8< &6" + title + " &8>&8&m" + sb.toString() + "&r");
+		return ColourUtils.translate("&8&m" + sb.toString() + "&r&8< &6" + title + " &8>&8&m" + sb.toString() + "&r");
 	}
 	
 	/**
@@ -606,7 +606,7 @@ public class PrintUtils
 		String titleCap = Character.toUpperCase(title.charAt(0)) + title.substring(1,title.length());
 		
 		raw(sender,"");
-		raw(sender,ColourUtils.transCol("&a" + titleCap + "&r"));
+		raw(sender,ColourUtils.translate("&a" + titleCap + "&r"));
 		raw(sender,getDivider());
 	}
 	
@@ -619,7 +619,7 @@ public class PrintUtils
 		String titleCap = Character.toUpperCase(title.charAt(0)) + title.substring(1,title.length());
 		
 		raw(p,"");
-		raw(p,ColourUtils.transCol("&a" + titleCap + "&r"));
+		raw(p,ColourUtils.translate("&a" + titleCap + "&r"));
 		raw(p,getDivider());
 	}
 	
@@ -641,7 +641,7 @@ public class PrintUtils
 			sb.append(" ");
 		}
 		
-		return ColourUtils.transCol(sb.toString());
+		return ColourUtils.translate(sb.toString());
 	}
 	
 	// Default chat width
@@ -657,7 +657,7 @@ public class PrintUtils
 	{
         if(message == null || message.equals("")) { player.sendMessage(""); }
         
-		message = ColourUtils.transCol(message);
+		message = ColourUtils.translate(message);
 		
 		int messagePxSize = 0;
 		boolean previousCode = false;
@@ -712,7 +712,7 @@ public class PrintUtils
 	{
         if(message == null || message.equals("")) { return ""; }
         
-		message = ColourUtils.transCol(message);
+		message = ColourUtils.translate(message);
 		
 		int messagePxSize = 0;
 		boolean previousCode = false;

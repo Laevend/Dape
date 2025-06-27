@@ -7,7 +7,7 @@ import coffee.dape.utils.PlayerUtils;
 /**
  * @author Laeven
  * 
- * This class defines the Online Player type
+ * This class defines the Online Player argument type
  */
 public class OnlinePlayerType extends ArgumentType
 {

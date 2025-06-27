@@ -12,7 +12,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import coffee.dape.Dape;
-import coffee.dape.utils.FileOpUtils;
+import coffee.dape.utils.FUtils;
 import coffee.dape.utils.Logg;
 import coffee.dape.utils.TimeUtils;
 
@@ -106,7 +106,7 @@ public class YamlConfig implements DapeConfig
 		String fileName = "corrupt_dape_config_" + TimeUtils.getDateFormat(TimeUtils.PATTERN_DASH_dd_MM_yy);
 		Path corruptConfigPath = Dape.internalFilePath(CORRUPT_CONFIG_DIR);
 		
-		FileOpUtils.createDirectories(corruptConfigPath);
+		FUtils.createDirectories(corruptConfigPath);
 		
 		int extraNumber = 1;
 		
@@ -118,7 +118,7 @@ public class YamlConfig implements DapeConfig
 		}
 		
 		Path finalPath = Dape.internalFilePath(CORRUPT_CONFIG_DIR + File.separator + fileName + ".yml");
-		FileOpUtils.copyFile(configFile,finalPath);
+		FUtils.copyFile(configFile,finalPath);
 		
 		if(!Files.exists(finalPath))
 		{
@@ -127,7 +127,7 @@ public class YamlConfig implements DapeConfig
 			return;
 		}
 		
-		FileOpUtils.delete(configFile);
+		FUtils.delete(configFile);
 		
 		if(Files.exists(configFile))
 		{
@@ -175,7 +175,7 @@ public class YamlConfig implements DapeConfig
 	
 	public void reset()
 	{
-		FileOpUtils.delete(configFile);
+		FUtils.delete(configFile);
 		firstTimeSetup();
 	}
 	
@@ -200,7 +200,7 @@ public class YamlConfig implements DapeConfig
 			return;
 		}
 		
-		FileOpUtils.createFile(configFile);
+		FUtils.createFile(configFile);
 		this.config = YamlConfiguration.loadConfiguration(configFile.toFile());
 		setDefaults();
 		this.config.options().setHeader(List.of(this.header));
@@ -223,7 +223,13 @@ public class YamlConfig implements DapeConfig
 	{
 		this.load();
 	}
-
+	
+	@Override
+	public Object getObject(String key)
+	{
+		return get().get(key);
+	}
+	
 	@Override
 	public boolean hasKey(String key)
 	{
@@ -265,6 +271,12 @@ public class YamlConfig implements DapeConfig
 	public double getDouble(String key)
 	{
 		return get().getDouble(key);
+	}
+	
+	@Override
+	public List<?> getList(String key)
+	{
+		return get().getList(key);
 	}
 
 	@Override

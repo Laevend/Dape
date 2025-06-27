@@ -2,11 +2,8 @@ package coffee.dape.cmdparsers.astral.parser;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,26 +13,15 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
-import org.bukkit.craftbukkit.v1_21_R1.command.CraftCommandMap;
-import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerCommandSendEvent;
+import org.bukkit.craftbukkit.v1_21_R4.command.CraftCommandMap;
 import org.bukkit.plugin.Plugin;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.mojang.brigadier.tree.CommandNode;
-import com.mojang.brigadier.tree.RootCommandNode;
 
 import coffee.dape.Dape;
 import coffee.dape.event.CommandRegisterEvent;
 import coffee.dape.utils.Logg;
 import coffee.dape.utils.Logg.Common.Component;
-import coffee.dape.utils.nms.NMSPlayerUtils;
-import net.minecraft.commands.CommandDispatcher;
-import net.minecraft.commands.CommandListenerWrapper;
-import net.minecraft.commands.ICompletionProvider;
-import net.minecraft.network.protocol.game.PacketPlayOutCommands;
-import net.minecraft.server.level.EntityPlayer;
 
 /**
  * @author Laeven
@@ -208,66 +194,6 @@ public class InternalCommandMap
         }
         
 		CommandFactory.refreshCommands();
-	}
-	
-	/**
-	 * Unused debugging method to see what commands are being sent to the client
-	 * @param p Player
-	 * @throws Exception
-	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public void updateClientCommands(Player p) throws Exception
-	{
-		CommandDispatcher dis = NMSPlayerUtils.getNMSPlayer(p).d.vanillaCommandDispatcher;
-		//CommandDispatcher dis = NMSPlayerUtils.getNMSPlayer(p).c.vanillaCommandDispatcher;
-		//CommandDispatcher dis = PlayerUtils.getNMSPlayer(p).server.getCommandDispatcher();
-		Method tabCompleteMethod = dis.getClass().getDeclaredMethod("a",CommandNode.class,CommandNode.class,CommandListenerWrapper.class,Map.class);
-		Field mojangCommandDispatcherField = dis.getClass().getDeclaredField("b");
-		EntityPlayer entityPlayer = NMSPlayerUtils.getNMSPlayer(p);
-		
-		tabCompleteMethod.setAccessible(true);
-		mojangCommandDispatcherField.setAccessible(true);
-		
-		Map<CommandNode<CommandListenerWrapper>, CommandNode<ICompletionProvider>> map = Maps.newIdentityHashMap();
-		RootCommandNode<ICompletionProvider> vanillaRoot = new RootCommandNode<ICompletionProvider>();
-		RootCommandNode<CommandListenerWrapper> vanilla = entityPlayer.d.vanillaCommandDispatcher.a().getRoot();
-		//RootCommandNode<CommandListenerWrapper> vanilla = entityPlayer.c.vanillaCommandDispatcher.a().getRoot();
-		//RootCommandNode<CommandListenerWrapper> vanilla = entityPlayer.server.vanillaCommandDispatcher.a().getRoot();
-		
-        map.put(vanilla,vanillaRoot);
-        tabCompleteMethod.invoke(dis,vanilla,vanillaRoot,entityPlayer.cU(),map);
-        // Above is used instead of the method below
-        //dis.a(vanilla,vanillaRoot,entityPlayer.getCommandListener(),map);
-        
-        RootCommandNode<ICompletionProvider> rootcommandnode = new RootCommandNode<ICompletionProvider>();
-        
-        com.mojang.brigadier.CommandDispatcher mojangCommandDispatcher = (com.mojang.brigadier.CommandDispatcher) mojangCommandDispatcherField.get(dis);
-        
-        map.put(mojangCommandDispatcher.getRoot(),rootcommandnode);
-        tabCompleteMethod.invoke(dis,mojangCommandDispatcher.getRoot(),rootcommandnode,entityPlayer.cU(),map);
-        // Above is used instead of the method below
-        //dis.a(dis.b.getRoot(),rootcommandnode,entityPlayer.getCommandListener(),map);
-        
-        Collection<String> bukkit = new LinkedHashSet<>();
-        
-        for(CommandNode<ICompletionProvider> node : rootcommandnode.getChildren())
-        {
-        	bukkit.add(node.getName());
-        }
-        
-        PlayerCommandSendEvent event = new PlayerCommandSendEvent(entityPlayer.getBukkitEntity(), new LinkedHashSet<>(bukkit));
-        event.getPlayer().getServer().getPluginManager().callEvent(event);
-        // Remove labels that were removed during the event
-        for(String orig : bukkit)
-        {
-	        if(!event.getCommands().contains(orig))
-	        {
-	        	//rootcommandnode.removeCommand(orig);
-	        	event.getCommands().remove(orig);
-	        }
-        }
-        
-        NMSPlayerUtils.sendPacket(new PacketPlayOutCommands(rootcommandnode),p);
 	}
 	
 	/**

@@ -3,7 +3,7 @@ package coffee.dape.cmdparsers.astral.types;
 /**
  * @author Laeven
  * 
- * This class defines the String type
+ * This class defines the String argument type
  */
 public class StringType extends ArgumentType
 {	

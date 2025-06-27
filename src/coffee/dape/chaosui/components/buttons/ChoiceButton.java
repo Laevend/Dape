@@ -51,7 +51,7 @@ public class ChoiceButton extends ChaosComponent
 		
 		for(String lore : choices)
 		{
-			choiceLore.add(ColourUtils.transCol("&7" + lore));
+			choiceLore.add(ColourUtils.translate("&7" + lore));
 		}
 		
 		for(int i = 0; i < choices.length; i++)

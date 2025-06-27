@@ -24,8 +24,8 @@ public class GUISession
 	// Prevents navigation event adding previous GUI when using back buttons as it will cause a loop
 	private boolean navigatingUsingBackButton = false;
 	
-	// Temp Data about slots
-	private Map<Integer,ChaosSlot> tempSlots = new HashMap<>();
+	// Session Data about slots
+	private Map<Integer,ChaosSlot> sessionSlots = new HashMap<>();
 	
 	// Not used in most cases
 	private Map<String,Object> globalData = null;
@@ -209,25 +209,25 @@ public class GUISession
 	 * @param InventoryView The players view of the inventory
 	 * @param com Chaos Component to set
 	 */
-	public void setTempComponent(ChaosComponent com) throws IllegalStateException
+	public void setSessionComponent(ChaosComponent com) throws IllegalStateException
 	{
-		if(!tempSlots.containsKey(com.getOccupyingSlot()))
+		if(!sessionSlots.containsKey(com.getOccupyingSlot()))
 		{
-			tempSlots.put(com.getOccupyingSlot(),new ChaosSlot(com.getOccupyingSlot()));
+			sessionSlots.put(com.getOccupyingSlot(),new ChaosSlot(com.getOccupyingSlot()));
 		}
 		
-		tempSlots.get(com.getOccupyingSlot()).setSlotComponent(com);
+		sessionSlots.get(com.getOccupyingSlot()).setSlotComponent(com);
 	}
 	
 	/**
 	 * Set a temporary GUI multi component that only exists for a specific player in an instance of a GUI
 	 * @param mcom ChaosMultiComponent to set
 	 */
-	public void setTempMultiComponent(ChaosMultiComponent mcom) throws IllegalStateException
+	public void setSessionMultiComponent(ChaosMultiComponent mcom) throws IllegalStateException
 	{
 		for(ChaosComponent com : mcom.getComponents().values())
 		{
-			setTempComponent(com);
+			setSessionComponent(com);
 		}
 	}
 	
@@ -236,14 +236,14 @@ public class GUISession
 	 * @param slot rawslot to check
 	 * @return
 	 */
-	public boolean isTempSlotOccupied(int slot)
+	public boolean isSessionSlotOccupied(int slot)
 	{
-		if(!tempSlots.containsKey(slot)) { return false; }
-		return tempSlots.get(slot).isOccupied();
+		if(!sessionSlots.containsKey(slot)) { return false; }
+		return sessionSlots.get(slot).isOccupied();
 	}
 	
-	public Map<Integer,ChaosSlot> getTempSlots()
+	public Map<Integer,ChaosSlot> getSessionSlots()
 	{
-		return tempSlots;
+		return sessionSlots;
 	}
 }

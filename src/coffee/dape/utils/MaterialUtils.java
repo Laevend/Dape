@@ -1,6 +1,7 @@
 package coffee.dape.utils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -14,6 +15,27 @@ import org.bukkit.inventory.ItemStack;
  */
 public class MaterialUtils
 {
+	public static Set<Material> BLOCKS = new HashSet<>();
+	public static Set<Material> ITEMS = new HashSet<>();
+	
+	public static void collectBlocksAndItems()
+	{
+		for(Material mat : Material.values())
+		{
+			if(mat.isBlock())
+			{
+				BLOCKS.add(mat);
+				continue;
+			}
+			
+			if(mat.isItem())
+			{
+				ITEMS.add(mat);
+				continue;
+			}
+		}
+	}
+	
 	/**
 	 * Returns the name of a material given the material enumerator
 	 * @param mat The material
@@ -127,17 +149,7 @@ public class MaterialUtils
 	 */
 	public static boolean canRenderAsItemStack(Material mat)
 	{
-		try
-		{
-			// Cannot render as ItemStack
-			NoneItemStackMaterial.valueOf(mat.toString());
-			return false;
-		}
-		catch(Exception e)
-		{
-			// Can render as ItemStack
-			return true;
-		}
+		return mat.asItemType() != null;
 	}
 	
 	/**
@@ -191,113 +203,6 @@ public class MaterialUtils
 	public static boolean isMaterial(String mat)
 	{
 		try { Material.valueOf(mat.toUpperCase()); return true; } catch(Exception e) { return false; }
-	}
-	
-	public enum NoneItemStackMaterial
-	{
-		POTTED_AZURE_BLUET,
-		LIGHT_BLUE_WALL_BANNER,
-		PURPLE_WALL_BANNER,
-		BUBBLE_CORAL_WALL_FAN,
-		POTTED_RED_MUSHROOM,
-		SOUL_FIRE,
-		POTTED_WARPED_ROOTS,
-		POTTED_BROWN_MUSHROOM,
-		BIRCH_WALL_SIGN,
-		BLUE_WALL_BANNER,
-		FIRE_CORAL_WALL_FAN,
-		SKELETON_WALL_SKULL,
-		WARPED_WALL_SIGN,
-		ATTACHED_MELON_STEM,
-		POTTED_CORNFLOWER,
-		END_PORTAL,
-		POTTED_SPRUCE_SAPLING,
-		POTTED_ACACIA_SAPLING,
-		DRAGON_WALL_HEAD,
-		CAVE_AIR,
-		CREEPER_WALL_HEAD,
-		POTTED_ALLIUM,
-		DEAD_BUBBLE_CORAL_WALL_FAN,
-		SPRUCE_WALL_SIGN,
-		DEAD_BRAIN_CORAL_WALL_FAN,
-		REDSTONE_WIRE,
-		PLAYER_WALL_HEAD,
-		MAGENTA_WALL_BANNER,
-		POTTED_FERN,
-		POTTED_BLUE_ORCHID,
-		RED_WALL_BANNER,
-		BUBBLE_COLUMN,
-		CRIMSON_WALL_SIGN,
-		PINK_WALL_BANNER,
-		PUMPKIN_STEM,
-		POTTED_LILY_OF_THE_VALLEY,
-		ZOMBIE_WALL_HEAD,
-		SWEET_BERRY_BUSH,
-		POTTED_ORANGE_TULIP,
-		DEAD_HORN_CORAL_WALL_FAN,
-		REDSTONE_WALL_TORCH,
-		HORN_CORAL_WALL_FAN,
-		LIGHT_GRAY_WALL_BANNER,
-		BAMBOO_SAPLING,
-		DARK_OAK_WALL_SIGN,
-		FROSTED_ICE,
-		TRIPWIRE,
-		MELON_STEM,
-		MOVING_PISTON,
-		POTTED_OAK_SAPLING,
-		POTTED_WHITE_TULIP,
-		GRAY_WALL_BANNER,
-		BLACK_WALL_BANNER,
-		POTTED_OXEYE_DAISY,
-		POTTED_JUNGLE_SAPLING,
-		POTATOES,
-		ATTACHED_PUMPKIN_STEM,
-		LIME_WALL_BANNER,
-		KELP_PLANT,
-		END_GATEWAY,
-		PISTON_HEAD,
-		AIR,
-		NETHER_PORTAL,
-		BEETROOTS,
-		DEAD_TUBE_CORAL_WALL_FAN,
-		POTTED_BIRCH_SAPLING,
-		WEEPING_VINES_PLANT,
-		YELLOW_WALL_BANNER,
-		DEAD_FIRE_CORAL_WALL_FAN,
-		POTTED_RED_TULIP,
-		POTTED_PINK_TULIP,
-		CYAN_WALL_BANNER,
-		POTTED_WARPED_FUNGUS,
-		WALL_TORCH,
-		SOUL_WALL_TORCH,
-		CARROTS,
-		BRAIN_CORAL_WALL_FAN,
-		POTTED_CRIMSON_FUNGUS,
-		POTTED_DANDELION,
-		TUBE_CORAL_WALL_FAN,
-		TALL_SEAGRASS,
-		FIRE,
-		POTTED_CACTUS,
-		VOID_AIR,
-		POTTED_DEAD_BUSH,
-		POTTED_BAMBOO,
-		ORANGE_WALL_BANNER,
-		TWISTING_VINES_PLANT,
-		WATER,
-		JUNGLE_WALL_SIGN,
-		WITHER_SKELETON_WALL_SKULL,
-		POTTED_WITHER_ROSE,
-		POTTED_CRIMSON_ROOTS,
-		LAVA,
-		COCOA,
-		OAK_WALL_SIGN,
-		BROWN_WALL_BANNER,
-		POTTED_DARK_OAK_SAPLING,
-		POTTED_POPPY,
-		GREEN_WALL_BANNER,
-		WHITE_WALL_BANNER,
-		ACACIA_WALL_SIGN,
-		;
 	}
 	
 	/**
@@ -464,4 +369,84 @@ public class MaterialUtils
 		
 		Material.SCULK_VEIN
 	);
+	
+	/**
+	 * Checks if this material occupies multiple block spaces
+	 * @param mat Material to check
+	 * @return True if this material occupies multiple block spaces, false otherwise
+	 */
+	public static boolean isMultiBlock(Material mat)
+	{
+		return MULTIBLOCKS.contains(mat);
+	}
+	
+	public static final Set<Material> MULTIBLOCKS = Set.of
+	(
+		Material.ACACIA_DOOR,
+		Material.BAMBOO_DOOR,
+		Material.BIRCH_DOOR,
+		Material.CHERRY_DOOR,
+		Material.CRIMSON_DOOR,
+		Material.DARK_OAK_DOOR,
+		Material.IRON_DOOR,
+		Material.JUNGLE_DOOR,
+		Material.OAK_DOOR,
+		Material.MANGROVE_DOOR,
+		Material.SPRUCE_DOOR,
+		Material.WARPED_DOOR,
+		Material.BLACK_BED,
+		Material.BLUE_BED,
+		Material.BROWN_BED,
+		Material.CYAN_BED,
+		Material.GRAY_BED,
+		Material.GREEN_BED,
+		Material.LIGHT_BLUE_BED,
+		Material.LIGHT_GRAY_BED,
+		Material.LIME_BED,
+		Material.MAGENTA_BED,
+		Material.ORANGE_BED,
+		Material.PINK_BED,
+		Material.PURPLE_BED,
+		Material.RED_BED,
+		Material.WHITE_BED,
+		Material.YELLOW_BED,
+		Material.BLACK_BANNER,
+		Material.BLUE_BANNER,
+		Material.BROWN_BANNER,
+		Material.CYAN_BANNER,
+		Material.GRAY_BANNER,
+		Material.GREEN_BANNER,
+		Material.LIGHT_BLUE_BANNER,
+		Material.LIGHT_GRAY_BANNER,
+		Material.LIME_BANNER,
+		Material.MAGENTA_BANNER,
+		Material.ORANGE_BANNER,
+		Material.PINK_BANNER,
+		Material.PURPLE_BANNER,
+		Material.RED_BANNER,
+		Material.WHITE_BANNER,
+		Material.YELLOW_BANNER
+	);
+	
+	public static final Set<Material> DYES = new HashSet<>();
+	
+	static
+	{
+		DYES.add(Material.BLACK_DYE);
+		DYES.add(Material.BLUE_DYE);
+		DYES.add(Material.BROWN_DYE);
+		DYES.add(Material.CYAN_DYE);
+		DYES.add(Material.GRAY_DYE);
+		DYES.add(Material.GREEN_DYE);
+		DYES.add(Material.LIGHT_BLUE_DYE);
+		DYES.add(Material.LIGHT_GRAY_DYE);
+		DYES.add(Material.LIME_DYE);
+		DYES.add(Material.MAGENTA_DYE);
+		DYES.add(Material.ORANGE_DYE);
+		DYES.add(Material.PINK_DYE);
+		DYES.add(Material.PURPLE_DYE);
+		DYES.add(Material.RED_DYE);
+		DYES.add(Material.WHITE_DYE);
+		DYES.add(Material.YELLOW_DYE);
+	}
 }

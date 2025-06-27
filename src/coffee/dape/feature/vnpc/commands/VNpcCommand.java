@@ -1,10 +1,11 @@
 package coffee.dape.feature.vnpc.commands;
 
+import org.bukkit.Registry;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
 
 import coffee.dape.cmdparsers.astral.annos.CommandEx;
-import coffee.dape.cmdparsers.astral.annos.Path;
+import coffee.dape.cmdparsers.astral.annos.CmdPath;
 import coffee.dape.cmdparsers.astral.annos.VMap;
 import coffee.dape.cmdparsers.astral.parser.ArgSet;
 import coffee.dape.cmdparsers.astral.parser.AstralExecutor;
@@ -46,9 +47,9 @@ public class VNpcCommand extends AstralExecutor
 		
 		addPath("nudgeZ",CmdSender.PLAYER,new ArgSet().of("nudge").of("<uid4>",ArgTypes.UID4,VNpcSuggestions.vnpcs()).mapTo("uid").of("z").of("<z>",ArgTypes.DOUBLE).mapTo("relative_z"));
 		
-		addPath("modifyProfession",CmdSender.PLAYER,new ArgSet().of("modify").of("<uid4>",ArgTypes.UID4,VNpcSuggestions.vnpcs()).mapTo("uid").of("profession").of("<profession>",ArgTypes.ENUM(Villager.Profession.class),VNpcSuggestions.villagerProfessions()).mapTo("profession"));
+		addPath("modifyProfession",CmdSender.PLAYER,new ArgSet().of("modify").of("<uid4>",ArgTypes.UID4,VNpcSuggestions.vnpcs()).mapTo("uid").of("profession").of("<profession>",ArgTypes.REGISTRY(Registry.VILLAGER_PROFESSION),VNpcSuggestions.villagerProfessions()).mapTo("profession"));
 		
-		addPath("modifyType",CmdSender.PLAYER,new ArgSet().of("modify").of("<uid4>",ArgTypes.UID4,VNpcSuggestions.vnpcs()).mapTo("uid").of("type").of("<type>",ArgTypes.ENUM(Villager.Type.class),VNpcSuggestions.villagerTypes()).mapTo("type"));
+		addPath("modifyType",CmdSender.PLAYER,new ArgSet().of("modify").of("<uid4>",ArgTypes.UID4,VNpcSuggestions.vnpcs()).mapTo("uid").of("type").of("<type>",ArgTypes.REGISTRY(Registry.VILLAGER_TYPE),VNpcSuggestions.villagerTypes()).mapTo("type"));
 		
 		addPath("modifyInterationType",CmdSender.PLAYER,new ArgSet().of("modify").of("<uid4>",ArgTypes.UID4,VNpcSuggestions.vnpcs()).mapTo("uid").of("interaction").of("<interaction>",ArgTypes.ENUM(InteractionType.class),VNpcSuggestions.vnpcInteractionTypes()).mapTo("interaction"));
 		
@@ -59,7 +60,7 @@ public class VNpcCommand extends AstralExecutor
 		addPath("forceRefresh",CmdSender.PLAYER,new ArgSet().of("refresh"));
 	}
 	
-	@Path(name = "create",description = "Creates a new vnpc",syntax = "/villagers create <name>",usage = "/villagers create myvillager")
+	@CmdPath(name = "create",description = "Creates a new vnpc",syntax = "/villagers create <name>",usage = "/villagers create myvillager")
 	public void create(Player p,@VMap("npc_name") String name)
 	{
 		UID4 uid = VNpcCtrl.addVNpc(name,p.getLocation());
@@ -69,7 +70,7 @@ public class VNpcCommand extends AstralExecutor
 		PrintUtils.success(p,"Created villager " + uid.toString());
 	}
 	
-	@Path(name = "move",description = "Moves a villager to where you're standing",syntax = "/villagers move <uid>",usage = "/villagers move mynpc#0493")
+	@CmdPath(name = "move",description = "Moves a villager to where you're standing",syntax = "/villagers move <uid>",usage = "/villagers move mynpc#0493")
 	public void move(Player p,@VMap("uid") UID4 uid)
 	{
 		if(!VNpcCtrl.contains(uid))
@@ -86,7 +87,7 @@ public class VNpcCommand extends AstralExecutor
 		PrintUtils.success(p,"Villager moved to players location");
 	}
 	
-	@Path(name = "remove",description = "Removes this villager",syntax = "/villagers remove <key>",usage = "/villagers remove mynpc#0493")
+	@CmdPath(name = "remove",description = "Removes this villager",syntax = "/villagers remove <key>",usage = "/villagers remove mynpc#0493")
 	public void remove(Player p,@VMap("uid") UID4 uid)
 	{
 		if(!VNpcCtrl.contains(uid))
@@ -99,7 +100,7 @@ public class VNpcCommand extends AstralExecutor
 		PrintUtils.success(p,"Removed villager " + uid.toString());
 	}
 	
-	@Path(name = "modifyAddTrade",description = "Add text to this villager",syntax = "/villagers modify <key> trade add",usage = "/villagers modify mynpc#0493 trade add")
+	@CmdPath(name = "modifyAddTrade",description = "Add text to this villager",syntax = "/villagers modify <key> trade add",usage = "/villagers modify mynpc#0493 trade add")
 	public void modifyAddTrade(Player p,@VMap("uid") UID4 uid)
 	{
 		if(!VNpcCtrl.contains(uid))
@@ -114,7 +115,7 @@ public class VNpcCommand extends AstralExecutor
 		//ChaosFactory.open(p,ChaosFactory.Common.ADD_TRADE);
 	}
 	
-	@Path(name = "modifyRemoveTrade",description = "Remove text on this villager",syntax = "/villagers modify <key> trade remove <index>",usage = "/villagers modify mynpc#0493 trade remove 0")
+	@CmdPath(name = "modifyRemoveTrade",description = "Remove text on this villager",syntax = "/villagers modify <key> trade remove <index>",usage = "/villagers modify mynpc#0493 trade remove 0")
 	public void modifyRemoveTrade(Player p,@VMap("uid") UID4 uid,@VMap("trade_index")int tradeIndex)
 	{
 		if(!VNpcCtrl.contains(uid))
@@ -130,7 +131,7 @@ public class VNpcCommand extends AstralExecutor
 		PrintUtils.success(p,"VNpc" + uid.toString() + " updated");
 	}
 	
-	@Path(name = "nudgeX",description = "Set the x axis position of this villager",syntax = "/villagers modify <key> x <x>",usage = "/villagers nudge mynpc#0493 x 57.0")
+	@CmdPath(name = "nudgeX",description = "Set the x axis position of this villager",syntax = "/villagers modify <key> x <x>",usage = "/villagers nudge mynpc#0493 x 57.0")
 	public void nudgeX(Player p,@VMap("uid") UID4 uid,@VMap("relative_x") double x)
 	{
 		if(!VNpcCtrl.contains(uid))
@@ -146,7 +147,7 @@ public class VNpcCommand extends AstralExecutor
 		PrintUtils.success(p,"VNpc " + uid.toString() + " updated");
 	}
 	
-	@Path(name = "nudgeY",description = "Set the y axis position of this villager",syntax = "/villagers modify <key> y <y>",usage = "/villagers nudge mynpc#0493 y 120.5")
+	@CmdPath(name = "nudgeY",description = "Set the y axis position of this villager",syntax = "/villagers modify <key> y <y>",usage = "/villagers nudge mynpc#0493 y 120.5")
 	public void nudgeY(Player p,@VMap("uid") UID4 uid,@VMap("relative_y") double y)
 	{
 		if(!VNpcCtrl.contains(uid))
@@ -162,7 +163,7 @@ public class VNpcCommand extends AstralExecutor
 		PrintUtils.success(p,"VNpc " + uid.toString() + " updated");
 	}
 	
-	@Path(name = "nudgeZ",description = "Set the z axis position of this villager",syntax = "/villagers modify <key> z <z>",usage = "/villagers nudge mynpc#0493 z -54.4")
+	@CmdPath(name = "nudgeZ",description = "Set the z axis position of this villager",syntax = "/villagers modify <key> z <z>",usage = "/villagers nudge mynpc#0493 z -54.4")
 	public void nudgeZ(Player p,@VMap("uid") UID4 uid,@VMap("relative_z") double z)
 	{
 		if(!VNpcCtrl.contains(uid))
@@ -178,7 +179,7 @@ public class VNpcCommand extends AstralExecutor
 		PrintUtils.success(p,"VNpc " + uid.toString() + " updated");
 	}
 	
-	@Path(name = "modifyProfession",description = "Change the villagers profession",syntax = "/villagers modify <key> profession <profession>",usage = "/villagers modify mynpc#0493 profession butcher")
+	@CmdPath(name = "modifyProfession",description = "Change the villagers profession",syntax = "/villagers modify <key> profession <profession>",usage = "/villagers modify mynpc#0493 profession butcher")
 	public void modifyProfession(Player p,@VMap("uid") UID4 uid,@VMap("profession") Villager.Profession villagerProfession)
 	{
 		if(!VNpcCtrl.contains(uid))
@@ -194,7 +195,7 @@ public class VNpcCommand extends AstralExecutor
 		PrintUtils.success(p,"VNpc " + uid.toString() + " updated");
 	}
 	
-	@Path(name = "modifyType",description = "Change the villagers type",syntax = "/villagers modify <key> type <type>",usage = "/villagers modify mynpc#0493 type plains")
+	@CmdPath(name = "modifyType",description = "Change the villagers type",syntax = "/villagers modify <key> type <type>",usage = "/villagers modify mynpc#0493 type plains")
 	public void modifyType(Player p,@VMap("uid") UID4 uid,@VMap("type") Villager.Type type)
 	{
 		if(!VNpcCtrl.contains(uid))
@@ -210,7 +211,7 @@ public class VNpcCommand extends AstralExecutor
 		PrintUtils.success(p,"VNpc " + uid.toString() + " updated");
 	}
 	
-	@Path(name = "modifyInterationType",description = "Change the villagers interaction type",syntax = "/villagers modify <key> interaction <interaction>",usage = "/villagers modify mynpc#0493 interaction none")
+	@CmdPath(name = "modifyInterationType",description = "Change the villagers interaction type",syntax = "/villagers modify <key> interaction <interaction>",usage = "/villagers modify mynpc#0493 interaction none")
 	public void modifyInterationType(Player p,@VMap("uid") UID4 uid,@VMap("interaction") InteractionType interaction)
 	{
 		if(!VNpcCtrl.contains(uid))
@@ -226,7 +227,7 @@ public class VNpcCommand extends AstralExecutor
 		PrintUtils.success(p,"VNpc " + uid.toString() + " updated");
 	}
 	
-	@Path(name = "modifyCustomName",description = "Change the villagers name",syntax = "/villagers modify <key> name <name>",usage = "/villagers modify mynpc#0493 name \"The Doom Slayer\"")
+	@CmdPath(name = "modifyCustomName",description = "Change the villagers name",syntax = "/villagers modify <key> name <name>",usage = "/villagers modify mynpc#0493 name \"The Doom Slayer\"")
 	public void modifyCustomName(Player p,@VMap("uid") UID4 uid,@VMap("custom_name") String name)
 	{
 		if(!VNpcCtrl.contains(uid))
@@ -242,7 +243,7 @@ public class VNpcCommand extends AstralExecutor
 		PrintUtils.success(p,"VNpc " + uid.toString() + " updated");
 	}
 	
-	@Path(name = "info",description = "Display information about this villager",syntax = "/villagers info <key>",usage = "/villagers info mynpc#0493")
+	@CmdPath(name = "info",description = "Display information about this villager",syntax = "/villagers info <key>",usage = "/villagers info mynpc#0493")
 	public void info(Player p,@VMap("uid") UID4 uid)
 	{
 		if(!VNpcCtrl.contains(uid))
@@ -255,8 +256,8 @@ public class VNpcCommand extends AstralExecutor
 		npc.printInfo(p);
 	}
 	
-	@Path(name = "forceRefresh",description = "Force refreshes all villagers",syntax = "/villagers refresh",usage = "/villagers refresh")
-	public void forceRefresh(Player p,@VMap("uid") UID4 uid)
+	@CmdPath(name = "forceRefresh",description = "Force refreshes all villagers",syntax = "/villagers refresh",usage = "/villagers refresh")
+	public void forceRefresh(Player p)
 	{
 		VNpcCtrl.respawnAll();
 		PrintUtils.info(p,"All villagers have been refreshed!");

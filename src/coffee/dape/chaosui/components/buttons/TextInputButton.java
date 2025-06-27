@@ -82,7 +82,7 @@ public class TextInputButton extends ChaosComponent
 				.name(title,ColourUtils.LIGHT_GREEN)
 				.lore(ColourUtils.applyColour("Current value: ",ColourUtils.TEXT) + ColourUtils.applyColour(initialValue,ColourUtils.VISTA_BLUE))
 				.append("")
-				.wrap(InputUtils.LEFT_CLICK + " " + ColourUtils.applyColour(buttonInteractMessage,ColourUtils.TEXT))
+				.wrap(InputUtils.LeftClick.LEFT_CLICK + " " + ColourUtils.applyColour(buttonInteractMessage,ColourUtils.TEXT))
 				.commit()
 				.setData("text_input",initialValue)
 				.create();
@@ -129,9 +129,9 @@ public class TextInputButton extends ChaosComponent
 		{
 			comp = (TextInputButton) builder.getSlots().get(slot).getSlotComponent();
 		}
-		else if(ChaosFactory.getSession(e.getPlayer()).getTempSlots().containsKey(slot))
+		else if(ChaosFactory.getSession(e.getPlayer()).getSessionSlots().containsKey(slot))
 		{
-			comp = (TextInputButton) ChaosFactory.getSession(e.getPlayer()).getTempSlots().get(slot).getSlotComponent();
+			comp = (TextInputButton) ChaosFactory.getSession(e.getPlayer()).getSessionSlots().get(slot).getSlotComponent();
 		}
 		else
 		{
@@ -189,7 +189,7 @@ public class TextInputButton extends ChaosComponent
 				.name(title,ColourUtils.LIGHT_GREEN)
 				.lore(ColourUtils.applyColour("Current value: ",ColourUtils.TEXT) + ColourUtils.applyColour(inputValue,ColourUtils.VISTA_BLUE))
 				.append("")
-				.wrap(InputUtils.LEFT_CLICK + " " + ColourUtils.applyColour(buttonInteractMessage,ColourUtils.TEXT))
+				.wrap(InputUtils.LeftClick.LEFT_CLICK + " " + ColourUtils.applyColour(buttonInteractMessage,ColourUtils.TEXT))
 				.commit()
 				.setData("text_input",inputValue)
 				.create();

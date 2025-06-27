@@ -3,7 +3,7 @@ package coffee.dape.commands;
 import org.bukkit.entity.Player;
 
 import coffee.dape.cmdparsers.astral.annos.CommandEx;
-import coffee.dape.cmdparsers.astral.annos.Path;
+import coffee.dape.cmdparsers.astral.annos.CmdPath;
 import coffee.dape.cmdparsers.astral.annos.VMap;
 import coffee.dape.cmdparsers.astral.elevatedaccount.ElevatedAccountCtrl;
 import coffee.dape.cmdparsers.astral.parser.ArgSet;
@@ -28,7 +28,7 @@ public final class AuthCommand extends AstralExecutor
 		addPath("auth player",CmdSender.PLAYER,new ArgSet().of("<value>",ArgTypes.STRING).mapTo("value"));
 	}
 	
-	@Path(name = "auth player",description = "Authorises a player to execute an elevated command",syntax = "/auth <pin>",usage = "/auth 4938gy2s")
+	@CmdPath(name = "auth player",description = "Authorises a player to execute an elevated command",syntax = "/auth <pin>",usage = "/auth 4938gy2s")
 	public final void authPlayer(Player p,@VMap("value") String value)
 	{
 		if(!ElevatedAccountCtrl.hasElevatedAccount(p) || ElevatedAccountCtrl.getAccount(p).isMarkedAsDeleted())

@@ -19,25 +19,32 @@ import java.util.UUID;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import com.google.gson.JsonObject;
+
 import coffee.dape.Dape;
 import coffee.dape.cmdparsers.astral.elevatedaccount.authmethod.AuthenticationMethod;
-import coffee.dape.cmdparsers.astral.elevatedaccount.authmethod.StaticPinAuthMethod;
-import coffee.dape.cmdparsers.astral.elevatedaccount.authmethod.TimedOTPAuthMethod;
+import coffee.dape.cmdparsers.astral.elevatedaccount.authmethod.totp.TimedOTPAuthMethod;
 import coffee.dape.config.Configurable;
-import coffee.dape.config.Configure;
+import coffee.dape.config.items.ConfigItem;
 import coffee.dape.event.ChatInputEvent;
+import coffee.dape.exception.DeserialiseException;
 import coffee.dape.exception.IllegalMethodCallException;
+import coffee.dape.exception.SerialiseException;
 import coffee.dape.utils.ChatBuilder;
 import coffee.dape.utils.ChatUtils;
 import coffee.dape.utils.ChatUtils.InputHandler;
+import coffee.dape.utils.ChecksumUtils;
 import coffee.dape.utils.ColourUtils;
-import coffee.dape.utils.FileOpUtils;
+import coffee.dape.utils.FUtils;
 import coffee.dape.utils.Logg;
 import coffee.dape.utils.MapUtils;
 import coffee.dape.utils.MathUtils;
 import coffee.dape.utils.PlayerUtils;
 import coffee.dape.utils.PrintUtils;
+import coffee.dape.utils.StringUtils;
 import coffee.dape.utils.chat.InputListener;
+import coffee.dape.utils.json.JUtils;
+import coffee.dape.utils.json.PersistJson;
 import coffee.dape.utils.security.Bouncer;
 import coffee.dape.utils.security.HashingUtils;
 import coffee.dape.utils.security.SecureString;
@@ -49,15 +56,21 @@ import net.md_5.bungee.api.chat.BaseComponent;
  * @author Laeven
  * Controller for ElevatedAccounts
  */
-public class ElevatedAccountCtrl implements Configurable, InputListener
+public class ElevatedAccountCtrl implements InputListener
 {
 	private static final Map<UUID,ElevatedAccount> accounts;
 	private static ConsoleAccount conAcc;
 	private static final Path ELEVATED_ACCOUNTS_DIR = Dape.internalFilePath("elevated");
-	protected static final int TRUE;
-	protected static final int FALSE;
+	public static final int TRUE;
+	public static final int FALSE;
 	private static ConsoleSetupPhase consoleSetupPhase = ConsoleSetupPhase.NONE;
 	private static SecureString[] newPinTest = new SecureString[2];
+	
+	/**
+	 * Changes to an authentication method from an elevated account user that can't be changed until the server stops
+	 * Only applies when {@linkplain Config#LOCKED_AUTH_METHODS} is true
+	 */
+	private static final Map<UUID,List<AuthenticationMethod>> pendingAuthChanges = new HashMap<>();
 	
 	static
 	{
@@ -75,7 +88,7 @@ public class ElevatedAccountCtrl implements Configurable, InputListener
 	}
 	
 	// Initialise
-	public final static void init()
+	public static final void init()
 	{
 		if(!ConsoleAccount.isSetup())
 		{
@@ -102,8 +115,36 @@ public class ElevatedAccountCtrl implements Configurable, InputListener
 		loadAll();
 	}
 	
+	/**
+	 * Set a pending change to an authentication method of an elevated account.
+	 * <p>
+	 * This pending change is committed when the server shuts down
+	 * @param uuid UUID of an owner of an ElevatedAccount
+	 * @param meth Authentication method to overwrite
+	 * @throws IllegalMethodCallException 
+	 */
+	public static final void setPendingAuthChange(UUID uuid,AuthenticationMethod meth) throws IllegalMethodCallException
+	{
+		Bouncer.haltAllBut(coffee.dape.cmdparsers.astral.elevatedaccount.ElevatedAccountCtrl.class,
+				coffee.dape.cmdparsers.astral.elevatedaccount.authmethod.staticpin.StaticPinSetup.class,
+				coffee.dape.cmdparsers.astral.elevatedaccount.authmethod.totp.TOTPSetup.class);
+		
+		if(hasElevatedAccount(uuid))
+		{
+			Logg.error("Player " + PlayerUtils.getName(uuid) + " is not an owner of an elevated account and thus cannot set a pending authentication change!");
+			return;
+		}
+		
+		if(!pendingAuthChanges.containsKey(uuid))
+		{
+			pendingAuthChanges.put(uuid,new ArrayList<>());
+		}
+		
+		pendingAuthChanges.get(uuid).add(meth);
+	}
+	
 	@InputHandler(ChatUtils.HandlerNames.ELEVATED_ACCOUNTS_CONSOLE_SETUP)
-	public final static void onChatInput(ChatInputEvent e)
+	public static final void onChatInputConsoleSetup(ChatInputEvent e)
 	{
 		Player p = e.getPlayer();
 		
@@ -156,7 +197,7 @@ public class ElevatedAccountCtrl implements Configurable, InputListener
 		
 		try
 		{
-			FileOpUtils.createDirectoriesForFile(Dape.internalFilePath("elevated" + File.separator + "console"));
+			FUtils.createDirectoriesForFile(Dape.internalFilePath("elevated" + File.separator + "console"));
 			Files.write(Dape.internalFilePath("elevated" + File.separator + "console"),new String(conAcc.getHashedPin().asString() + "," + Base64.getEncoder().encodeToString(conAcc.getSalt().asByteArray())).getBytes());
 		}
 		catch (IOException ex)
@@ -172,7 +213,7 @@ public class ElevatedAccountCtrl implements Configurable, InputListener
 	 * Method for first time setup of console auth
 	 * @param p Player setting up console account
 	 */
-	public final static void setupConsoleAccount(Player p)
+	public static final void setupConsoleAccount(Player p)
 	{
 		Objects.requireNonNull(p,"Player cannot be null!");
 		Bouncer.probe();
@@ -185,72 +226,90 @@ public class ElevatedAccountCtrl implements Configurable, InputListener
 		ChatUtils.requestInput(p,"Enter a pin/password that will be used to authorise any elevated commands via the console",Namespace.of(Dape.getNamespaceName(),ChatUtils.HandlerNames.ELEVATED_ACCOUNTS_CONSOLE_SETUP));
 	}
 	
-	public static void createNewElevatedAccount(Player p,SecureString pin)
-	{
-		Objects.requireNonNull(p,"Player cannot be null!");
-		Objects.requireNonNull(pin,"Pin cannot be null!");
-		
-		if(accounts.containsKey(p.getUniqueId())) { return; }
-		if(Files.exists(Paths.get(ELEVATED_ACCOUNTS_DIR + File.separator + p.getUniqueId().toString() + ".json"))) { return; }
-		
-		ElevatedAccount newAcc = new ElevatedAccount(p.getUniqueId(),getMethods());
-		new ElevatedAccountWriter().toJson(newAcc,Paths.get(ELEVATED_ACCOUNTS_DIR + File.separator + p.getUniqueId().toString() + ".json"));
-	}
-	
-	public static void createExistingElevatedAccount(UUID uuid)
-	{
-		Objects.requireNonNull(uuid,"UUID cannot be null!");
-		
-		if(accounts.containsKey(uuid)) { return; }
-		if(Files.exists(Paths.get(ELEVATED_ACCOUNTS_DIR + File.separator + uuid.toString() + ".json"))) { return; }
-		
-		ElevatedAccount newAcc = new ElevatedAccount(uuid,getMethods());
-		new ElevatedAccountWriter().toJson(newAcc,Paths.get(ELEVATED_ACCOUNTS_DIR + File.separator + uuid.toString() + ".json"));
-	}
-	
-	public static boolean hasElevatedAccount(Player p)
+	public static final boolean createNewElevatedAccount(Player p)
 	{
 		Objects.requireNonNull(p,"Player cannot be null!");
 		
-		return accounts.containsKey(p.getUniqueId()) || Files.exists(Paths.get(ELEVATED_ACCOUNTS_DIR + File.separator + p.getUniqueId().toString() + ".json"));
-	}
-	
-	public static boolean hasElevatedAccount(UUID uuid)
-	{
-		Objects.requireNonNull(uuid,"UUID cannot be null!");
+		if(accounts.containsKey(p.getUniqueId())) { return false; }
+		if(Files.exists(Paths.get(ELEVATED_ACCOUNTS_DIR + File.separator + p.getUniqueId().toString() + ".json"))) { return false; }
 		
-		return accounts.containsKey(uuid) || Files.exists(Paths.get(ELEVATED_ACCOUNTS_DIR + File.separator + uuid.toString() + ".json"));
+		SecureString temporaryPin = new SecureString(StringUtils.getRandomAlphaNumeric(4));
+		ElevatedAccount newAcc = new ElevatedAccount(p.getUniqueId(),temporaryPin);
+		
+		if(!save(newAcc)) { return false; }
+		
+		PrintUtils.info(p,"Your elevated account has been created.");
+		PrintUtils.info(p,"You must setup alternate forms of authentication. This can be done through the account setup menu which can be opened via '/elevate setup'.");
+		PrintUtils.info(p,"Your temporary pin is: " + temporaryPin.asString());
+		
+		if(Config.LOCK_ACCOUNT_ADDING.get())
+		{
+			Logg.info("Elevated account for player '" + p.getName() + "' created. Restart server to take effect.");
+			return true;
+		}
+		
+		accounts.put(newAcc.getOwner(),newAcc);
+		Logg.info("Elevated account for player '" + p.getName() + "' created. Account is active immediately.");
+		return true;
 	}
 	
-	public static boolean isAccountLoaded(Player p)
+	public static final boolean hasElevatedAccount(Player p)
 	{
 		Objects.requireNonNull(p,"Player cannot be null!");
 		
-		return accounts.containsKey(p.getUniqueId());
+		return hasElevatedAccountInMemory(p.getUniqueId()) || Files.exists(Paths.get(ELEVATED_ACCOUNTS_DIR + File.separator + p.getUniqueId().toString() + ".json"));
 	}
 	
-	public static boolean isAccountLoaded(UUID uuid)
+	public static final boolean hasElevatedAccount(UUID uuid)
 	{
 		Objects.requireNonNull(uuid,"UUID cannot be null!");
 		
-		return accounts.containsKey(uuid);
+		return hasElevatedAccountInMemory(uuid) || Files.exists(Paths.get(ELEVATED_ACCOUNTS_DIR + File.separator + uuid.toString() + ".json"));
 	}
 	
-	public static boolean hasElevatedAccountLoaded(Player p)
+	public static final boolean hasElevatedAccountInMemory(Player p)
 	{
 		Objects.requireNonNull(p,"Player cannot be null!");
 		
 		return accounts.containsKey(p.getUniqueId());
 	}
 	
-	public static boolean hasElevatedAccountLoaded(UUID uuid)
+	public static final boolean hasElevatedAccountInMemory(UUID uuid)
 	{
 		Objects.requireNonNull(uuid,"UUID cannot be null!");
 		
 		return accounts.containsKey(uuid);
 	}
 	
-	public static void removeElevatedAccount(UUID uuid)
+	public static final boolean isAccountLoaded(Player p)
+	{
+		Objects.requireNonNull(p,"Player cannot be null!");
+		
+		return accounts.containsKey(p.getUniqueId());
+	}
+	
+	public static final boolean isAccountLoaded(UUID uuid)
+	{
+		Objects.requireNonNull(uuid,"UUID cannot be null!");
+		
+		return accounts.containsKey(uuid);
+	}
+	
+	public static final boolean hasElevatedAccountLoaded(Player p)
+	{
+		Objects.requireNonNull(p,"Player cannot be null!");
+		
+		return accounts.containsKey(p.getUniqueId());
+	}
+	
+	public static final boolean hasElevatedAccountLoaded(UUID uuid)
+	{
+		Objects.requireNonNull(uuid,"UUID cannot be null!");
+		
+		return accounts.containsKey(uuid);
+	}
+	
+	public static final void removeElevatedAccount(UUID uuid)
 	{
 		Objects.requireNonNull(uuid,"UUID cannot be null!");
 		
@@ -261,7 +320,7 @@ public class ElevatedAccountCtrl implements Configurable, InputListener
 			accounts.get(uuid).markAsDeleted(true);
 		}
 
-		FileOpUtils.delete(Paths.get(ELEVATED_ACCOUNTS_DIR + File.separator + uuid.toString() + ".json"));
+		FUtils.delete(Paths.get(ELEVATED_ACCOUNTS_DIR + File.separator + uuid.toString() + ".json"));
 	}
 	
 	public static ElevatedAccount getAccount(Player p)
@@ -272,7 +331,7 @@ public class ElevatedAccountCtrl implements Configurable, InputListener
 		return accounts.get(p.getUniqueId());
 	}
 	
-	public static Map<UUID,ElevatedAccount> getAccounts()
+	public static final Map<UUID,ElevatedAccount> getAccounts()
 	{
 		return accounts;
 	}
@@ -285,27 +344,146 @@ public class ElevatedAccountCtrl implements Configurable, InputListener
 		return accounts.get(uuid);
 	}
 
-	public static ConsoleAccount getConsoleAccount()
+	public static final ConsoleAccount getConsoleAccount()
 	{
 		return conAcc;
 	}
-
-	public static void save(UUID uuid)
+	
+	private static final boolean save(ElevatedAccount account)
 	{
-		Objects.requireNonNull(uuid,"UUID cannot be null!");
-		System.out.println(Paths.get(ELEVATED_ACCOUNTS_DIR + File.separator + uuid.toString() + ".json"));
+		boolean saveSuccessful = false;
 		
-		if(!accounts.containsKey(uuid)) { return; }
+		try
+		{
+			JsonObject data = account.serialise();
+			
+			// Apply pending changes if any
+			if(pendingAuthChanges.containsKey(account.getOwner()))
+			{
+				for(AuthenticationMethod newMethodChange : pendingAuthChanges.get(account.getOwner()))
+				{
+					switch(newMethodChange.getAuthType())
+					{
+						case TEMP_PIN -> data.add(ElevatedAccount.TEMP_PIN_AUTH,((PersistJson) newMethodChange).serialise());
+						case STATIC_PIN -> data.add(ElevatedAccount.STATIC_PIN_AUTH,((PersistJson) newMethodChange).serialise());
+						case TIMED_OTP -> data.add(ElevatedAccount.TOTP_AUTH,((PersistJson) newMethodChange).serialise());
+						case EMAIL_OTP -> data.add(ElevatedAccount.EMAIL_AUTH,((PersistJson) newMethodChange).serialise());
+						case YUBI_KEY -> data.add(ElevatedAccount.YUBIKEY_AUTH,((PersistJson) newMethodChange).serialise());
+						case MICROSOFT_AUTH -> data.add(ElevatedAccount.MICROSOFT_AUTH,((PersistJson) newMethodChange).serialise());
+						default ->
+						{
+							throw new SerialiseException("Unknown auth type! '" + newMethodChange.getAuthType() + "'");
+						}
+					}
+				}
+			}
+			
+			String json = JUtils.toJsonString(data,true);
+			Path path = Paths.get(ELEVATED_ACCOUNTS_DIR + File.separator + account.getOwner().toString() + ".json");
+			JUtils.write(path,data,true);
+			
+			long checksumOfMemory = ChecksumUtils.getChecksum(json.getBytes());
+			long checksumOfFile = FUtils.checksumFile(path);
+			
+			if(checksumOfMemory == checksumOfFile)
+			{
+				saveSuccessful = true;
+			}
+			else
+			{
+				Logg.error("ElevatedAccount for player " + PlayerUtils.getName(account.getOwner()) + " data on disk does not match data in memory! " + checksumOfFile + " != " + checksumOfMemory);
+				return false;
+			}
+		}
+		catch(SerialiseException e)
+		{
+			Logg.error("Could not serialise ElevatedAccount for player " + PlayerUtils.getName(account.getOwner()) + " (" + account.getOwner().toString() + ")",e);
+			return false;
+		}
 		
-		new ElevatedAccountWriter().toJson(getAccount(uuid),Paths.get(ELEVATED_ACCOUNTS_DIR + File.separator + uuid.toString() + ".json"));
+		return saveSuccessful;
 	}
 	
-	public static void saveAll()
+	public static final boolean save(UUID uuid)
 	{
+		if(!accounts.containsKey(uuid))
+		{
+			Logg.error("Elevated account for player " + PlayerUtils.getName(uuid) + " does not exist in the accounts map!");
+			return false;
+		}
+		
+		try
+		{
+			Path accountPath = Paths.get(ELEVATED_ACCOUNTS_DIR + File.separator + uuid.toString() + ".json");
+			
+			JsonObject data = accounts.get(uuid).serialise();
+			String json = JUtils.toJsonString(data,true);
+			Path path = Paths.get(ELEVATED_ACCOUNTS_DIR + File.separator + uuid.toString() + ".json");
+			JUtils.write(path,data,true);
+			
+			long checksumOfMemory = ChecksumUtils.getChecksum(json.getBytes());
+			long checksumOfFile = FUtils.checksumFile(path);
+			
+			if(checksumOfMemory != checksumOfFile)
+			{
+				Logg.error("ElevatedAccount for player " + PlayerUtils.getName(uuid) + " data on disk does not match data in memory! " + checksumOfFile + " != " + checksumOfMemory);
+				return false;
+			}
+			
+			/**
+			 * The reason we delete isMarkedAsDeleted() accounts after we've saved them is to prevent a situation
+			 * where the elevated account on disk cannot be deleted despite it being requested to be deleted.
+			 * 
+			 * By saving the elevated account first with the mark of deletion, the next time the server is started,
+			 * another attempt will be made to delete the account. If that fails, it will simply be not loaded.
+			 */
+			
+			// Accounts marked as deleted 
+			if(accounts.get(uuid).isMarkedAsDeleted())
+			{
+				// Check if the account still exists on disk
+				if(Files.exists(accountPath))
+				{
+					// If so delete it
+					FUtils.delete(accountPath);
+					
+					// If it still exists attempt a delete on exit
+					if(Files.exists(accountPath))
+					{
+						Logg.error("An elevated account that was marked for deletion could not be deleted!");
+						Logg.error("Dape will attempt to have this account deleted on server shutdown but should it not be able to, you will need to manually delete!");
+						accountPath.toFile().deleteOnExit();
+					}
+					
+					/**
+					 * If this fails a manual delete will be needed.
+					 * Not to worry as isMarkedAsDeleted() remains persistent in the file
+					 */
+				}
+			}
+			
+			return true;
+		}
+		catch(SerialiseException e)
+		{
+			Logg.error("Could not serialise ElevatedAccount for player " + PlayerUtils.getName(uuid) + " (" + uuid.toString() + ")",e);
+			return false;
+		}
+	}
+	
+	public static final boolean saveAll()
+	{
+		boolean allSavesSuccessful = true;
+		
 		for(UUID uuid : accounts.keySet())
 		{
-			new ElevatedAccountWriter().toJson(getAccount(uuid),Paths.get(ELEVATED_ACCOUNTS_DIR + File.separator + uuid.toString() + ".json"));
+			if(!save(uuid))
+			{
+				allSavesSuccessful = false;
+			}
 		}
+		
+		return allSavesSuccessful;
 	}
 	
 	/**
@@ -315,58 +493,62 @@ public class ElevatedAccountCtrl implements Configurable, InputListener
 	 */
 	private static final void loadAll()
 	{
-		FileOpUtils.createDirectories(ELEVATED_ACCOUNTS_DIR);
+		FUtils.createDirectories(ELEVATED_ACCOUNTS_DIR);
+		List<Path> elevatedAccountsFiles = FUtils.getPathsInDirectory(ELEVATED_ACCOUNTS_DIR);
 		
-		if(ELEVATED_ACCOUNTS_DIR.toFile().listFiles() == null) { Collections.unmodifiableMap(accounts); return; }
-		if(ELEVATED_ACCOUNTS_DIR.toFile().listFiles().length == 0) { Collections.unmodifiableMap(accounts); return; }
-		
-		for(File file : ELEVATED_ACCOUNTS_DIR.toFile().listFiles())
+		if(elevatedAccountsFiles.size() == 0)
 		{
-			if(!file.getName().endsWith(".json")) { continue; }
-			ElevatedAccount elevatedAccount = new ElevatedAccountReader().fromJson(file);
+			if(Config.LOCK_ACCOUNT_ADDING.get())
+			{
+				Collections.unmodifiableMap(accounts);
+			}
 			
-			if(elevatedAccount == null) { continue; }
+			return;
+		}
+		
+		for(Path elevatedAccountFile : FUtils.getPathsInDirectory(ELEVATED_ACCOUNTS_DIR))
+		{
+			if(!elevatedAccountFile.getFileName().toString().endsWith(".json")) { continue; }
+			
+			JsonObject obj = JUtils.readToObject(elevatedAccountFile);
+			ElevatedAccount elevatedAccount;
+			
+			try
+			{
+				elevatedAccount = new ElevatedAccount(obj);
+				
+				// Do not add elevated accounts to the map that are marked as deleted
+				if(elevatedAccount.isMarkedAsDeleted())
+				{
+					Logg.warn("Found elevated account marked for deletion! Owner: '" + PlayerUtils.getName(elevatedAccount.getOwner()) + "'");
+					FUtils.delete(elevatedAccountFile);
+					continue;
+				}
+			}
+			catch(DeserialiseException e)
+			{
+				Logg.error("Error loading elevated account! '" + elevatedAccountFile.getFileName() + "'",e);
+				continue;
+			}
 			
 			Logg.info("Loaded elevated account for " + PlayerUtils.getName(elevatedAccount.getOwner()));
 			accounts.put(elevatedAccount.getOwner(),elevatedAccount);
 		}
 		
-		Collections.unmodifiableMap(accounts);
-	}
-	
-	private static List<AuthenticationMethod> getMethods()
-	{
-		List<AuthenticationMethod> methods = new ArrayList<>();
-		
-		if(Dape.getConfigFile().getBoolean(ConfigKey.STATIC_PIN))
+		if(Config.LOCK_ACCOUNT_ADDING.get())
 		{
-			methods.add(new StaticPinAuthMethod(new SecureString(new StringBuilder(MathUtils.getSecureRandomIntString(6)))));
+			Collections.unmodifiableMap(accounts);
 		}
-		
-		if(Dape.getConfigFile().getBoolean(ConfigKey.TOTP))
-		{
-			methods.add(new TimedOTPAuthMethod());
-		}
-		
-		if(Dape.getConfigFile().getBoolean(ConfigKey.EMAIL_OTP))
-		{
-			// Not implemented yet
-		}
-		
-		if(Dape.getConfigFile().getBoolean(ConfigKey.YUBI_KEY))
-		{
-			// Not implemented yet
-		}
-		
-		return methods;
 	}
 	
 	public enum AuthMethod
 	{
+		TEMP_PIN,
 		STATIC_PIN,
 		TIMED_OTP,
 		EMAIL_OTP,
-		YUBI_KEY
+		YUBI_KEY,
+		MICROSOFT_AUTH
 	}
 	
 	private enum ConsoleSetupPhase
@@ -376,31 +558,57 @@ public class ElevatedAccountCtrl implements Configurable, InputListener
 		ASKING_FOR_PIN_OR_PASSWORD_2
 	}
 	
-	@Configure
-	public static Map<String,Object> getDefaults()
+	public static class Config implements Configurable
 	{
-		return Map.of(
-				ConfigKey.STATIC_PIN,true,
-				ConfigKey.TOTP,true,
-				ConfigKey.EMAIL_OTP,true,	// Not implemented yet
-				ConfigKey.YUBI_KEY,false,	// Not implemented yet (requires local server)
-				ConfigKey.AUTH_TIME,300_000L); // 5 minutes
-	}
-	
-	public static class ConfigKey
-	{
-		public static final String STATIC_PIN = "elevated_accounts.auth_method.static_pin";
-		public static final String TOTP = "elevated_accounts.auth_method.totp";
-		public static final String EMAIL_OTP = "elevated_accounts.auth_method.email_otp";
-		public static final String YUBI_KEY = "elevated_accounts.auth_method.yubi_key";
+		public static final ConfigItem<Boolean> STATIC_PIN = new ConfigItem<>("elevated_accounts.auth_method.static_pin.enabled",true,"If static pins should be enabled as an authentication method.");
+		public static final ConfigItem<Boolean> TOTP = new ConfigItem<>("elevated_accounts.auth_method.totp.enabled",true,"If timed one-time-passcodes should be enabled as an authentication method.");
+		public static final ConfigItem<Boolean> EMAIL_OTP = new ConfigItem<>("elevated_accounts.auth_method.email_otp.enabled",true,"If email one-time-passcode should be enabled as an authentication method.");
+		public static final ConfigItem<Boolean> YUBI_KEY = new ConfigItem<>("elevated_accounts.auth_method.yubi_key.enabled",false,"If Yubikey hardware auth should be enabled as an authentication method.");
+		public static final ConfigItem<Boolean> MICROSOFT_AUTH = new ConfigItem<>("elevated_accounts.auth_method.microsoft_auth.enabled",false,"If Microsofts authenticator app should be enabled as an authentication method.");
 		
-		public static final String AUTH_TIME = "elevated_accounts.auth_time";
+		public static final ConfigItem<Long> AUTH_TIME = new ConfigItem<>("elevated_accounts.auth_time",300_000L,"The time that an elevated account will stay authorised allowing execution of other elevated commands without having to re-auth. Default is 5 minutes.")
+		{
+			@Override
+			public Long clamp(Long value)
+			{
+				return MathUtils.clamp(1,Long.MAX_VALUE,value);
+			}
+		};
+		
+		public static final ConfigItem<Integer> MIN_AUTH_METHODS = new ConfigItem<>("elevated_accounts.min_auth_methods",2,"Minimum number of authentication methods that a player must have active on their elevated account.")
+		{
+			@Override
+			public Integer clamp(Integer value)
+			{
+				return MathUtils.clamp(1,5,value);
+			}
+		};
+		
+		public static final ConfigItem<Boolean> LOCKED_AUTH_METHODS = new ConfigItem<>("elevated_accounts.locked_auth_methods",false,"If elevated account owners will have their authentication methods locked on server boot." +
+				" If true, owners of elevated accounts that want to add, remove, or change their authentication methods will not have their changes apply until a restart of the server.");
+		public static final ConfigItem<Boolean> LOCK_ACCOUNT_ADDING = new ConfigItem<>("elevated_accounts.lock_account_adding",false,"If the server will prevent adding new elevated accounts upon boot." +
+				" If true, No one will be able to add or remove elevated accounts. They will be read only.");
+		
+		public static final ConfigItem<Integer> STATIC_PIN_MAX_PIN_LENGTH = new ConfigItem<>("elevated_accounts.auth_method.static_pin.max_pin_length",32,"Maximum number of characters allowed in a static pin. Must be between 3 and 64")
+		{
+			@Override
+			public Integer clamp(Integer value)
+			{
+				return MathUtils.clamp(3,64,value);
+			}
+		};
+		
+		public static final ConfigItem<Boolean> ONLY_CONSOLE_CAN_CREATE_NEW_ELEVATED_ACCOUNTS = new ConfigItem<>("elevated_accounts.auth_method.only_console_can_create_new_elevated_accounts",true,"When true, elevated accounts can only be created when the '/elevate create' command is executed in console.");
+		
+		public static final ConfigItem<String> EMAIL_SENDER = new ConfigItem<>("elevated_accounts.auth_method.email_otp.sender","DapeServerEmailSender@dape.com","Email ID of sender");
+		public static final ConfigItem<String> EMAIL_HOST = new ConfigItem<>("elevated_accounts.auth_method.email_otp.host","127.0.0.1","Email host");
+		public static final ConfigItem<String> EMAIL_MAIL_SERVER = new ConfigItem<>("elevated_accounts.auth_method.email_otp.mail_server","mail.smtp.host","Mail server");
 	}
 	
 	public static class SecretViewWarning implements InputListener
 	{
 		@InputHandler(ChatUtils.HandlerNames.ELEVATED_ACCOUNTS_VIEW_SECRET)
-		public final static void onChatInput(ChatInputEvent e)
+		public static final void onChatInput(ChatInputEvent e)
 		{
 			// Check input session id is matching that given by the request
 			if(!e.getPlayer().getUniqueId().equals(e.getSessionOwner())) { return; }
@@ -414,7 +622,7 @@ public class ElevatedAccountCtrl implements Configurable, InputListener
 			
 			for(AuthenticationMethod meth : acc.getAuthMethods())
 			{
-				if(meth.getAuthMethod() != AuthMethod.TIMED_OTP) { continue; }
+				if(meth.getAuthType() != AuthMethod.TIMED_OTP) { continue; }
 				
 				TimedOTPAuthMethod totpAuthMethod = (TimedOTPAuthMethod) meth;
 				BufferedImage qrCode = totpAuthMethod.getQrCode(e.getPlayer().getUniqueId());
@@ -426,7 +634,7 @@ public class ElevatedAccountCtrl implements Configurable, InputListener
 				PrintUtils.error(e.getPlayer(),"DO NOT SHARE THIS QRCODE OR YOUR TOTP SECRET WITH ANYONE!");
 				BaseComponent[] totpSecret = new ChatBuilder()
 					.setMessage("&5Totp secret&8:&d" + totpAuthMethod.getSecret().asString().substring(0,7) + "...")
-					.setHoverShowTextEvent(ColourUtils.transCol("&eClick me to copy your secret to your clipboard"))
+					.setHoverShowTextEvent(ColourUtils.translate("&eClick me to copy your secret to your clipboard"))
 					.setClickCopyToClipboardEvent(totpAuthMethod.getSecret().asString()).getResult();
 				PrintUtils.sendComp(e.getPlayer(),totpSecret);
 				return;

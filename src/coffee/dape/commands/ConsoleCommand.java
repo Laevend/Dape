@@ -7,7 +7,7 @@ import org.bukkit.entity.Player;
 
 import coffee.dape.cmdparsers.astral.annos.CommandEx;
 import coffee.dape.cmdparsers.astral.annos.Elevated;
-import coffee.dape.cmdparsers.astral.annos.Path;
+import coffee.dape.cmdparsers.astral.annos.CmdPath;
 import coffee.dape.cmdparsers.astral.annos.VMap;
 import coffee.dape.cmdparsers.astral.elevatedaccount.ConsoleAccount;
 import coffee.dape.cmdparsers.astral.elevatedaccount.ElevatedAccountCtrl;
@@ -39,7 +39,7 @@ public final class ConsoleCommand extends AstralExecutor
 		addPath("unlock account",CmdSender.CONSOLE,new ArgSet().of("unlock").of("<elevated account>",ArgTypes.STRING,ElevatedAccountSuggestions.elevatedAccountOwners()).mapTo("owner"));
 	}
 	
-	@Path(name = "setup console",description = "Setup the console auth pin/password",syntax = "/console auth <pin/password>",usage = "/console auth 4938gy2s")
+	@CmdPath(name = "setup console",description = "Setup the console auth pin/password",syntax = "/console auth <pin/password>",usage = "/console auth 4938gy2s")
 	public void setupConsole(Player p)
 	{
 		if(ConsoleAccount.isSetup())
@@ -51,7 +51,7 @@ public final class ConsoleCommand extends AstralExecutor
 		ElevatedAccountCtrl.setupConsoleAccount(p);
 	}
 	
-	@Path(name = "auth console",description = "Authorises the console to execute an elevated command",syntax = "/console auth <pin/password>",usage = "/console auth 4938gy2s")
+	@CmdPath(name = "auth console",description = "Authorises the console to execute an elevated command",syntax = "/console auth <pin/password>",usage = "/console auth 4938gy2s")
 	public void authConsole(ConsoleCommandSender con,@VMap("pin") String pin)
 	{
 		if(!ElevatedAccountCtrl.getConsoleAccount().hasPendingCommand())
@@ -77,7 +77,7 @@ public final class ConsoleCommand extends AstralExecutor
 	}
 	
 	@Elevated
-	@Path(name = "unlock account",description = "Authorises the console to execute an elevated command",syntax = "/console auth <pin/password>",usage = "/console auth 4938gy2s")
+	@CmdPath(name = "unlock account",description = "Authorises the console to execute an elevated command",syntax = "/console auth <pin/password>",usage = "/console auth 4938gy2s")
 	public final void unlockAccount(ConsoleCommandSender con,@VMap("owner") String playerName)
 	{
 		if(!PlayerUtils.isAPlayer(playerName))

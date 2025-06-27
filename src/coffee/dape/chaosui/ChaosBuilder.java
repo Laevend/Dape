@@ -3,44 +3,51 @@ package coffee.dape.chaosui;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
-import org.bukkit.inventory.ItemStack;
 
-import coffee.dape.chaosui.ChaosDecor.DecorLocation;
-import coffee.dape.chaosui.ChaosDecor.DecorType;
 import coffee.dape.chaosui.ChaosFactory.InvTemplate;
 import coffee.dape.chaosui.anno.ChaosGUI;
+import coffee.dape.chaosui.anno.NestedChaosGUI;
 import coffee.dape.chaosui.behaviour.Behaviours;
 import coffee.dape.chaosui.components.ChaosComponent;
 import coffee.dape.chaosui.components.ChaosMultiComponent;
 import coffee.dape.chaosui.components.ChaosRegion;
 import coffee.dape.chaosui.components.buttons.AnimatedButton;
 import coffee.dape.chaosui.components.buttons.BackButton;
+import coffee.dape.chaosui.instancedargs.SessionArgs1;
+import coffee.dape.chaosui.instancedargs.SessionArgs10;
+import coffee.dape.chaosui.instancedargs.SessionArgs2;
+import coffee.dape.chaosui.instancedargs.SessionArgs3;
+import coffee.dape.chaosui.instancedargs.SessionArgs4;
+import coffee.dape.chaosui.instancedargs.SessionArgs5;
+import coffee.dape.chaosui.instancedargs.SessionArgs6;
+import coffee.dape.chaosui.instancedargs.SessionArgs7;
+import coffee.dape.chaosui.instancedargs.SessionArgs8;
+import coffee.dape.chaosui.instancedargs.SessionArgs9;
+import coffee.dape.chaosui.instancedargs.SessionPlayer;
 import coffee.dape.chaosui.interfaces.ChaosInterface;
 import coffee.dape.chaosui.interfaces.common.DefaultCI;
 import coffee.dape.chaosui.interfaces.paginator.Paginator;
 import coffee.dape.chaosui.slots.ChaosSlot;
 import coffee.dape.exception.MissingAnnotationException;
-import coffee.dape.utils.ItemBuilder;
+import coffee.dape.utils.ClassUtils;
 import coffee.dape.utils.Logg;
 import coffee.dape.utils.Logg.Common.Component;
 import coffee.dape.utils.MathUtils;
 import coffee.dape.utils.SoundUtils;
 import coffee.dape.utils.SoundUtils.SoundMixer;
-import coffee.dape.utils.structs.Pair;
+import coffee.dape.utils.security.Bouncer;
 
 public abstract class ChaosBuilder
 {
@@ -61,21 +68,35 @@ public abstract class ChaosBuilder
 	// Material used to fill the GUI
 	private Material fillMaterial = null;
 	
-	// If the GUI has any decor
-	// <DecorLocation,<DecorType,DecorRegionName>>
-	private Map<DecorLocation,Pair<DecorType,String>> decorRegions = new HashMap<>();
-	
 	private SoundMixer openSoundMixer = null;
 	private SoundMixer closeSoundMixer = null;
 	
 	// Prefix used in setting and getting data from players session for a group of GUI's
 	private String GUIPrefix;
 	
+	// If this Builder is itself nested inside another builder
+	private boolean nested = false;
+	private Map<String,ChaosBuilder> nestedGUIs = null;
+	
+	private Class<?> sessionArgumentInterface = null;
+	private int sessionArgumentNumber = 0;
+	
+	/**
+	 * Initialises the GUI.
+	 * <p>
+	 * If the GUI uses the @ChaosGUI annotation, it is automatically called by {@link ChaosFactory#init()} during server startup.
+	 * <p>
+	 * If the GUI uses the @NestedChaosGUI annotation, it is NOT called automatically.
+	 * You are expected to initialise it manually when using the {@link #nest(ChaosBuilder)} method in the parent GUI.
+	 */
 	public ChaosBuilder()
 	{
 		try
 		{
 			Class<?> builderClass = this.getClass();
+			
+			// Check if the initialising GUI is nested
+			if(builderClass.isAnnotationPresent(NestedChaosGUI.class)) { return; }
 			
 			// Check that this builder has the gui annotation
 			if(!builderClass.isAnnotationPresent(ChaosGUI.class))
@@ -131,6 +152,22 @@ public abstract class ChaosBuilder
 			
 			this.template = guiAnno.template();
 		    
+			SessionInterfaceCheck:
+			for(Class<?> sessionArgInterfaceUsed : ClassUtils.getAllInterfacesImplemented(builderClass))
+			{
+				if(sessionArgInterfaceUsed.equals(SessionPlayer.class)) { sessionArgumentInterface = SessionPlayer.class; sessionArgumentNumber = SessionPlayer.NUM_OF_ARGS; break SessionInterfaceCheck; }
+				if(sessionArgInterfaceUsed.equals(SessionArgs1.class)) { sessionArgumentInterface = SessionArgs1.class; sessionArgumentNumber = SessionPlayer.NUM_OF_ARGS; break SessionInterfaceCheck; }
+				if(sessionArgInterfaceUsed.equals(SessionArgs2.class)) { sessionArgumentInterface = SessionArgs2.class; sessionArgumentNumber = SessionPlayer.NUM_OF_ARGS; break SessionInterfaceCheck; }
+				if(sessionArgInterfaceUsed.equals(SessionArgs3.class)) { sessionArgumentInterface = SessionArgs3.class; sessionArgumentNumber = SessionPlayer.NUM_OF_ARGS; break SessionInterfaceCheck; }
+				if(sessionArgInterfaceUsed.equals(SessionArgs4.class)) { sessionArgumentInterface = SessionArgs4.class; sessionArgumentNumber = SessionPlayer.NUM_OF_ARGS; break SessionInterfaceCheck; }
+				if(sessionArgInterfaceUsed.equals(SessionArgs5.class)) { sessionArgumentInterface = SessionArgs5.class; sessionArgumentNumber = SessionPlayer.NUM_OF_ARGS; break SessionInterfaceCheck; }
+				if(sessionArgInterfaceUsed.equals(SessionArgs6.class)) { sessionArgumentInterface = SessionArgs6.class; sessionArgumentNumber = SessionPlayer.NUM_OF_ARGS; break SessionInterfaceCheck; }
+				if(sessionArgInterfaceUsed.equals(SessionArgs7.class)) { sessionArgumentInterface = SessionArgs7.class; sessionArgumentNumber = SessionPlayer.NUM_OF_ARGS; break SessionInterfaceCheck; }
+				if(sessionArgInterfaceUsed.equals(SessionArgs8.class)) { sessionArgumentInterface = SessionArgs8.class; sessionArgumentNumber = SessionPlayer.NUM_OF_ARGS; break SessionInterfaceCheck; }
+				if(sessionArgInterfaceUsed.equals(SessionArgs9.class)) { sessionArgumentInterface = SessionArgs9.class; sessionArgumentNumber = SessionPlayer.NUM_OF_ARGS; break SessionInterfaceCheck; }
+				if(sessionArgInterfaceUsed.equals(SessionArgs10.class)) { sessionArgumentInterface = SessionArgs10.class; sessionArgumentNumber = SessionPlayer.NUM_OF_ARGS; break SessionInterfaceCheck; }
+			}
+			
 			try
 			{
 				init();
@@ -154,7 +191,102 @@ public abstract class ChaosBuilder
 		}
 		catch(Exception e)
 		{
-			e.printStackTrace();
+			Logg.Common.printFail(Component.GUI,"Building",this.name);
+			Logg.error("An uncaught exception occured building nested GUI " + this.name,e);
+		}
+	}
+	
+	/**
+	 * Initialises this builder as a nested GUI. Called from {@link #nest(ChaosBuilder, String)}
+	 * @param parentBuilder A parent builder with the ChaosGUI annotation
+	 * @param nestedBuilderName Name of the nested builder
+	 */
+	private void constructAsNested(ChaosBuilder parentBuilder,String nestedBuilderName)
+	{
+		this.name = nestedBuilderName;
+		this.template = parentBuilder.getTemplate();
+		
+		try
+		{
+			Class<?> builderClass = this.getClass();
+			
+			// Check that this builder has the nested gui annotation
+			if(!builderClass.isAnnotationPresent(NestedChaosGUI.class))
+			{
+				Logg.Common.printFail(Component.GUI,"Building Nested","? -> " + builderClass.getSimpleName());
+				throw new MissingAnnotationException("NestedChaosGUI of class " + builderClass.getSimpleName() + " Is missing the '@NestedChaosGUI' annotation!");
+			}
+			
+			NestedChaosGUI guiAnno = builderClass.getAnnotation(NestedChaosGUI.class);
+			Class<?> handlerClass = guiAnno.handler();
+			
+			// If the Handler class is not the default Object.class meaning there is no handler
+			if(!handlerClass.equals(Object.class))
+			{
+				if(!ChaosHandler.class.isAssignableFrom(handlerClass))
+				{
+					Logg.Common.printFail(Component.GUI,"Building Nested",this.name);
+					throw new IllegalArgumentException("NestedChaosGUI '" + this.name + "' cannot be initialised with a handler that does not extend ChaosHandler!");
+				}
+				
+				try
+				{
+					Constructor<?> cons = handlerClass.getConstructor();
+					this.handler = (ChaosHandler) cons.newInstance();
+				}
+				catch(NoSuchMethodException e)
+				{
+					Logg.Common.printFail(Component.GUI,"Building Nested",this.name);
+					Logg.fatal("NestedChaosGUI '" + this.name + "' cannot initialise handler because default constructor does not exist!",e);
+					return;
+				}
+				catch(SecurityException e)
+				{
+					Logg.Common.printFail(Component.GUI,"Building Nested",this.name);
+					Logg.fatal("NestedChaosGUI '" + this.name + "' cannot initialise handler because a security manager is present preventing it!",e);
+					return;
+				}
+				catch (Exception e)
+				{
+					Logg.Common.printFail(Component.GUI,"Building Nested",this.name);
+					Logg.fatal("NestedChaosGUI '" + this.name + "' cannot initialise handler!",e);
+				}
+			}
+		    
+			try
+			{
+				init();
+				
+				// Use default interface if one is not supplied
+				if(!hasInterface())
+				{
+					setInterface(new DefaultCI());
+				}
+				
+				checkIfRegionsOverlap(false);
+			}
+			catch(Exception e)
+			{
+				Logg.Common.printFail(Component.GUI,"Building Nested",this.name);
+				Logg.error("ChaosGUI '" + this.name + "' cannot initialise!",e);
+				return;
+			}
+			
+			if(parentBuilder.getNestedGUIs().containsKey(this.name))
+			{
+				ChaosBuilder existingNestedBuilder = parentBuilder.getNestedGUIs().get(this.name);
+				Logg.Common.printFail(Component.GUI,"Building Nested",this.name);
+				throw new IllegalStateException("Cannot initialise NestedChaosGUI '" + this.name + "' as a nested builder already exists with the same name in parent builder " + parentBuilder.getName() + "! " + existingNestedBuilder.getClass().getSimpleName());
+			}
+			
+			parentBuilder.addNestedGUI(this);
+			
+			Logg.Common.printOk(Component.GUI,"Building Nested",this.name);
+		}
+		catch(Exception e)
+		{
+			Logg.Common.printFail(Component.GUI,"Building Nested",this.name);
+			Logg.error("An uncaught exception occured building nested GUI " + this.name,e);
 		}
 	}
 	
@@ -164,38 +296,19 @@ public abstract class ChaosBuilder
 	public abstract void init() throws Exception;
 	
 	/**
-	 * Builds GUI
-	 * @param human Player
-	 */
-	public void build(HumanEntity human)
-	{
-		if(human instanceof Player player) { build(player); }
-		Logg.warn("ChaosGUI could not open " + name + " as human entity is not an instance of player!");
-	}
-	
-	/**
-	 * Builds GUI
-	 * @param sender Player
-	 */
-	public void build(CommandSender sender)
-	{
-		if(sender instanceof Player player) { build(player); }
-		Logg.warn("ChaosGUI could not open " + name + " as command sender is not an instance of player!");
-	}
-	
-	/**
-	 * Builds a GUI using a player
-	 * @param p The player
+	 * Builds a GUI and displays it to the player with arguments
+	 * @param p The player to open the GUI to
+	 * @param arguments Arguments to pass to the GUI
 	 * @return InventoryView
 	 */
-	public InventoryView build(Player p)
+	public InventoryView buildWithArgs(Player p,Object... arguments)
 	{
-		Inventory inv = null;
-		InventoryView view = null;
+		Objects.requireNonNull(p,"Player cannot be null!");
+		Objects.requireNonNull(arguments,"Arguments cannot be null!");
 		
 		// Stop the clocks of animated buttons
 		// Not doing this causes them to appear in other GUIS if navigated to quickly
-		for(ChaosSlot slot : ChaosFactory.getSession(p).getTempSlots().values())
+		for(ChaosSlot slot : ChaosFactory.getSession(p).getSessionSlots().values())
 		{
 			if(slot.getSlotComponent().getType() == ChaosComponent.Type.ANIMATED_BUTTON)
 			{
@@ -204,7 +317,51 @@ public abstract class ChaosBuilder
 		}
 		
 		// Clear temporary ChaosComponents
-		ChaosFactory.getSession(p).getTempSlots().clear();
+		ChaosFactory.getSession(p).getSessionSlots().clear();
+		
+		if(!initSessionComponents(p,arguments)) { return null; }
+		
+		return build(p);
+	}
+	
+	/**
+	 * Builds a GUI and displays it to the player
+	 * @param p The player to open the GUI to
+	 * @return InventoryView
+	 */
+	public InventoryView buildWithNoArgs(Player p)
+	{
+		Objects.requireNonNull(p,"Player cannot be null!");
+		
+		// Stop the clocks of animated buttons
+		// Not doing this causes them to appear in other GUIS if navigated to quickly
+		for(ChaosSlot slot : ChaosFactory.getSession(p).getSessionSlots().values())
+		{
+			if(slot.getSlotComponent().getType() == ChaosComponent.Type.ANIMATED_BUTTON)
+			{
+				((AnimatedButton) slot.getSlotComponent()).stop();
+			}
+		}
+		
+		// Clear temporary ChaosComponents
+		ChaosFactory.getSession(p).getSessionSlots().clear();
+		
+		if(!initSessionComponents(p)) { return null; }
+		
+		return build(p);
+	}
+	
+	/**
+	 * Builds a GUI and displays it to the player
+	 * @param p The player to open the GUI to
+	 * @return InventoryView
+	 */
+	private InventoryView build(Player p)
+	{
+		Objects.requireNonNull(p,"Player cannot be null!");
+		
+		Inventory inv = null;
+		InventoryView view = null;
 		
 		switch(template)
 		{
@@ -251,7 +408,6 @@ public abstract class ChaosBuilder
 		
 		buildInterface(view);
 		buildComponents(view);
-		buildDecor(view);
 		
 		if(this.fillMaterial != null)
 		{
@@ -262,9 +418,9 @@ public abstract class ChaosBuilder
 			}
 		}
 		
-		buildGUI(view);
+		buildSessionComponents(p,view);
 		
-		buildTempComponents(p,view);
+		buildGUI(view);
 		
 		if(openSoundMixer != null)
 		{
@@ -275,6 +431,239 @@ public abstract class ChaosBuilder
 		
 		viewers.add(p.getUniqueId());
 		return view;
+	}
+	
+	/**
+	 * Builds a nested GUI and displays it to the player with arguments
+	 * @param p The player to open the GUI to
+	 * @param arguments Arguments to pass to the GUI
+	 * @return InventoryView
+	 */
+	public InventoryView buildNestedWithArgs(Player p,Object... arguments)
+	{
+		Objects.requireNonNull(p,"Player cannot be null!");
+		Objects.requireNonNull(arguments,"Arguments cannot be null!");
+		
+		// Stop the clocks of animated buttons
+		// Not doing this causes them to appear in other GUIS if navigated to quickly
+		for(ChaosSlot slot : ChaosFactory.getSession(p).getSessionSlots().values())
+		{
+			if(slot.getSlotComponent().getType() == ChaosComponent.Type.ANIMATED_BUTTON)
+			{
+				((AnimatedButton) slot.getSlotComponent()).stop();
+			}
+		}
+		
+		// Clear temporary ChaosComponents
+		ChaosFactory.getSession(p).getSessionSlots().clear();
+		
+		if(!initSessionComponents(p,arguments)) { return null; }
+		
+		return buildNested(p);
+	}
+	
+	/**
+	 * Builds a nested GUI and displays it to the player
+	 * @param p The player to open the GUI to
+	 * @return InventoryView
+	 */
+	public InventoryView buildNestedWithNoArgs(Player p)
+	{
+		Objects.requireNonNull(p,"Player cannot be null!");
+		
+		// Stop the clocks of animated buttons
+		// Not doing this causes them to appear in other GUIS if navigated to quickly
+		for(ChaosSlot slot : ChaosFactory.getSession(p).getSessionSlots().values())
+		{
+			if(slot.getSlotComponent().getType() == ChaosComponent.Type.ANIMATED_BUTTON)
+			{
+				((AnimatedButton) slot.getSlotComponent()).stop();
+			}
+		}
+		
+		// Clear temporary ChaosComponents
+		ChaosFactory.getSession(p).getSessionSlots().clear();
+		
+		if(!initSessionComponents(p)) { return null; }
+		
+		return buildNested(p);
+	}
+	
+	/**
+	 * Builds a nested GUI and displays it to the player
+	 * @param p The player to open the GUI to
+	 * @return InventoryView
+	 */
+	private InventoryView buildNested(Player p)
+	{
+		Objects.requireNonNull(p,"Player cannot be null!");
+		
+		InventoryView view = p.getOpenInventory();
+		
+		buildInterface(view);
+		buildComponents(view);
+		
+		if(this.fillMaterial != null)
+		{
+			// Paint regions that only allow filling
+			for(ChaosRegion region : regions.values())
+			{
+				ChaosFactory.paintGUI(view,region,fillMaterial);
+			}
+		}
+		
+		buildSessionComponents(p,view);
+		
+		buildGUI(view);
+		
+		if(openSoundMixer != null)
+		{
+			openSoundMixer.play(p);
+		}
+		
+		ChaosFactory.signGUI(view);
+		
+		viewers.add(p.getUniqueId());
+		return view;
+	}
+	
+	/**
+	 * Initialises session components
+	 * @param arguments Arguments used to initialise the components with
+	 * @return True if the the SCAH is not null and correct handler method was called, false otherwise
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private boolean initSessionComponents(Player p,Object... arguments)
+	{
+		if(sessionArgumentInterface == null) { return true; }
+		
+		if(arguments == null || arguments.length == 0)
+		{
+			if(!this.sessionArgumentInterface.equals(SessionPlayer.class))
+			{
+				logInitSessionComponentsError(arguments.length);
+				return false;
+			}
+			
+			((SessionPlayer) this).initSession(p);
+			return true;
+		}
+		
+		switch(arguments.length)
+		{
+			case 1 ->
+			{
+				if(!this.sessionArgumentInterface.equals(SessionArgs1.class))
+				{
+					logInitSessionComponentsError(arguments.length);
+					return false;
+				}
+				
+				((SessionArgs1) this).initSession(p,arguments[0]);
+			}
+			case 2 ->
+			{
+				if(!this.sessionArgumentInterface.equals(SessionArgs2.class))
+				{
+					logInitSessionComponentsError(arguments.length);
+					return false;
+				}
+				
+				((SessionArgs2) this).initSession(p,arguments[0],arguments[1]);
+			}
+			case 3 ->
+			{
+				if(!this.sessionArgumentInterface.equals(SessionArgs3.class))
+				{
+					logInitSessionComponentsError(arguments.length);
+					return false;
+				}
+				
+				((SessionArgs3) this).initSession(p,arguments[0],arguments[1],arguments[2]);
+			}
+			case 4 ->
+			{
+				if(!this.sessionArgumentInterface.equals(SessionArgs4.class))
+				{
+					logInitSessionComponentsError(arguments.length);
+					return false;
+				}
+				
+				((SessionArgs4) this).initSession(p,arguments[0],arguments[1],arguments[2],arguments[3]);
+			}
+			case 5 ->
+			{
+				if(!this.sessionArgumentInterface.equals(SessionArgs5.class))
+				{
+					logInitSessionComponentsError(arguments.length);
+					return false;
+				}
+				
+				((SessionArgs5) this).initSession(p,arguments[0],arguments[1],arguments[2],arguments[3],arguments[4]);
+			}
+			case 6 ->
+			{
+				if(!this.sessionArgumentInterface.equals(SessionArgs6.class))
+				{
+					logInitSessionComponentsError(arguments.length);
+					return false;
+				}
+				
+				((SessionArgs6) this).initSession(p,arguments[0],arguments[1],arguments[2],arguments[3],arguments[4],arguments[5]);
+			}
+			case 7 ->
+			{
+				if(!this.sessionArgumentInterface.equals(SessionArgs7.class))
+				{
+					logInitSessionComponentsError(arguments.length);
+					return false;
+				}
+				
+				((SessionArgs7) this).initSession(p,arguments[0],arguments[1],arguments[2],arguments[3],arguments[4],arguments[5],arguments[6]);
+			}
+			case 8 ->
+			{
+				if(!this.sessionArgumentInterface.equals(SessionArgs8.class))
+				{
+					logInitSessionComponentsError(arguments.length);
+					return false;
+				}
+				
+				((SessionArgs8) this).initSession(p,arguments[0],arguments[1],arguments[2],arguments[3],arguments[4],arguments[5],arguments[6],arguments[7]);
+			}
+			case 9 ->
+			{
+				if(!this.sessionArgumentInterface.equals(SessionArgs9.class))
+				{
+					logInitSessionComponentsError(arguments.length);
+					return false;
+				}
+				
+				((SessionArgs9) this).initSession(p,arguments[0],arguments[1],arguments[2],arguments[3],arguments[4],arguments[5],arguments[6],arguments[7],arguments[8]);
+			}
+			case 10 ->
+			{
+				if(!this.sessionArgumentInterface.equals(SessionArgs10.class))
+				{
+					logInitSessionComponentsError(arguments.length);
+					return false;
+				}
+				
+				((SessionArgs10) this).initSession(p,arguments[0],arguments[2],arguments[2],arguments[3],arguments[4],arguments[5],arguments[6],arguments[7],arguments[8],arguments[9]);
+			}
+			default ->
+			{
+				Logg.error("ChaosGUI's cannot natively take more than 10 arguments! To use more than 10 arguments, store arguments in session data!");
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
+	private void logInitSessionComponentsError(int gotArgNumber)
+	{
+		Logg.error("GUI '" + this.name + "' was passed an incorrect number of arguments for its SessionArg interface '" + this.sessionArgumentInterface.toString() + "'. Got " + gotArgNumber + ". Expected " + sessionArgumentNumber);
 	}
 	
 	/**
@@ -337,6 +726,8 @@ public abstract class ChaosBuilder
 	 */
 	public ChaosRegion getRegion(int rawSlot)
 	{
+		Objects.requireNonNull(rawSlot,"Raw slot cannot be null!");
+		
 		for(ChaosRegion region : regions.values())
 		{
 			if(region.getArea().contains(rawSlot)) { return region; }
@@ -347,6 +738,8 @@ public abstract class ChaosBuilder
 	
 	public ChaosRegion getRegion(String regionName)
 	{
+		Bouncer.requireNotNullOrEmpty(regionName,"Region name cannot be null, empty or blank!");
+		
 		if(!regions.containsKey(regionName)) { return null; }
 		return regions.get(regionName);
 	}
@@ -357,17 +750,25 @@ public abstract class ChaosBuilder
 	 */
 	public void defineRegion(ChaosRegion region)
 	{
+		Objects.requireNonNull(region,"Region cannot be null!");
+		
 		regions.put(region.getName(),region);
 	}
 	
-	public void defineRegion(String regionName,int firstSlot,int... slotsOccupying)
+	public void defineRegion(String regionName,int... slotsOccupying)
 	{
-		ChaosRegion region = new ChaosRegion(regionName,firstSlot,slotsOccupying);
+		Bouncer.requireNotNullOrEmpty(regionName,"Region name cannot be null, empty or blank!");
+		Bouncer.requireNotNullOrEmpty(slotsOccupying,"Occupying slots cannot be null or empty!");
+		
+		ChaosRegion region = new ChaosRegion(regionName,slotsOccupying);
 		regions.put(region.getName(),region);
 	}
 	
 	public void defineRegion(String regionName,Set<Integer> slotsOccupying)
 	{
+		Bouncer.requireNotNullOrEmpty(regionName,"Region name cannot be null, empty or blank!");
+		Bouncer.requireNotNullOrEmpty(slotsOccupying,"Occupying slots cannot be null or empty!");
+		
 		ChaosRegion region = new ChaosRegion(regionName,slotsOccupying);
 		regions.put(region.getName(),region);
 	}
@@ -377,6 +778,8 @@ public abstract class ChaosBuilder
 	 */
 	public void defineHeaderRegion(String headerName)
 	{
+		Bouncer.requireNotNullOrEmpty(headerName,"Header name cannot be null, empty or blank!");
+		
 		ChaosRegion region;
 		
 		switch(template)
@@ -418,6 +821,8 @@ public abstract class ChaosBuilder
 	 */
 	public void defineFooterRegion(String footerName)
 	{
+		Bouncer.requireNotNullOrEmpty(footerName,"Header name cannot be null, empty or blank!");
+		
 		ChaosRegion region;
 		
 		switch(template)
@@ -487,6 +892,8 @@ public abstract class ChaosBuilder
 	 */
 	public void defineBodyRegion(String bodyName)
 	{
+		Bouncer.requireNotNullOrEmpty(bodyName,"Header name cannot be null, empty or blank!");
+		
 		ChaosRegion region;
 		
 		switch(template)
@@ -556,11 +963,23 @@ public abstract class ChaosBuilder
 	}
 	
 	/**
+	 * Gets the instanced argument container
+	 * This is used to call init for components that require arguments specific to the instance of the GUI to initialise
+	 * @return InstancedArgContainer
+	 */
+	public Class<?> getSessionArgumentInterface()
+	{
+		return sessionArgumentInterface;
+	}
+	
+	/**
 	 * Set a static GUI component that will never change regardless of who views this GUI
 	 * @param com Chaos Component to set
 	 */
-	public void setStaticComponent(ChaosComponent com) throws IllegalStateException
+	public void putStaticComponent(ChaosComponent com) throws IllegalStateException
 	{
+		Objects.requireNonNull(com,"ChaosComponent cannot be null!");
+		
 		if(!slots.containsKey(com.getOccupyingSlot()))
 		{
 			slots.put(com.getOccupyingSlot(),new ChaosSlot(com.getOccupyingSlot()));
@@ -576,14 +995,76 @@ public abstract class ChaosBuilder
 	}
 	
 	/**
+	 * Set many static GUI components that will never change regardless of who views this GUI
+	 * @param coms Chaos Components
+	 * @throws IllegalStateException
+	 */
+	public void putAllStaticComponents(ChaosComponent... coms) throws IllegalStateException
+	{
+		Objects.requireNonNull(coms,"ChaosComponents cannot be null!");
+		
+		for(ChaosComponent com : coms)
+		{
+			putStaticComponent(com);
+		}
+	}
+	
+	/**
 	 * Set a static GUI multi component that will never change regardless of who views this GUI
 	 * @param mcom ChaosMultiComponent to set
 	 */
-	public void setStaticMultiComponent(ChaosMultiComponent mcom) throws IllegalStateException
+	public void putStaticMultiComponent(ChaosMultiComponent mcom) throws IllegalStateException
 	{
+		Objects.requireNonNull(mcom,"ChaosMultiComponent cannot be null!");
+		
 		for(ChaosComponent com : mcom.getComponents().values())
 		{
-			setStaticComponent(com);
+			putStaticComponent(com);
+		}
+	}
+	
+	/**
+	 * Set a session only GUI component that is only viewable for the player viewing this GUI
+	 * @param p Player who's session this component will be apart of
+	 * @param com Chaos Component
+	 * @throws IllegalStateException
+	 */
+	public void putSessionComponent(Player p,ChaosComponent com) throws IllegalStateException
+	{
+		Objects.requireNonNull(com,"ChaosComponent cannot be null!");
+		
+		getSession(p).setSessionComponent(com);
+	}
+	
+	/**
+	 * Set many session only GUI components that is only viewable for the player viewing this GUI
+	 * @param p Player who's session this component will be apart of
+	 * @param coms Chaos Components
+	 * @throws IllegalStateException
+	 */
+	public void putAllSessionComponents(Player p,ChaosComponent... coms) throws IllegalStateException
+	{
+		Objects.requireNonNull(coms,"ChaosComponents cannot be null!");
+		
+		for(ChaosComponent com : coms)
+		{
+			putSessionComponent(p,com);
+		}
+	}
+	
+	/**
+	 * Set a session only GUI multi component that is only viewable for the player viewing this GUI
+	 * @param p Player who's session this component will be apart of
+	 * @param mcom ChaosMultiComponent to set
+	 * @throws IllegalStateException
+	 */
+	public void putSessionMultiComponent(Player p,ChaosMultiComponent mcom) throws IllegalStateException
+	{
+		Objects.requireNonNull(mcom,"ChaosMultiComponents cannot be null!");
+		
+		for(ChaosComponent com : mcom.getComponents().values())
+		{
+			putSessionComponent(p,com);
 		}
 	}
 	
@@ -595,6 +1076,8 @@ public abstract class ChaosBuilder
 	 */
 	public boolean hasSlotBehaviour(int slot)
 	{
+		Bouncer.requireNotNullAndInRange(slot,0,54,"Slot cannot be null and must be a valid slot between 0 and 54!");
+		
 		// Loop is not a big deal as there are not many regions to check in a GUI
 		for(ChaosRegion region : regions.values())
 		{
@@ -612,6 +1095,8 @@ public abstract class ChaosBuilder
 	 */
 	public Behaviours getSlotBehaviour(int slot)
 	{
+		Bouncer.requireNotNullAndInRange(slot,0,54,"Slot cannot be null and must be a valid slot between 0 and 54!");
+		
 		// Loop is not a big deal as there are not many regions to check in a GUI
 		for(ChaosRegion region : regions.values())
 		{
@@ -629,6 +1114,8 @@ public abstract class ChaosBuilder
 	 */
 	public boolean isSlotOccupied(int slot)
 	{
+		Bouncer.requireNotNullAndInRange(slot,0,54,"Slot cannot be null and must be a valid slot between 0 and 54!");
+		
 		if(!slots.containsKey(slot)) { return false; }
 		return slots.get(slot).isOccupied();
 	}
@@ -645,6 +1132,9 @@ public abstract class ChaosBuilder
 	 */
 	public void setRegionBehaviour(String regionName,Behaviours behaviour) throws IllegalStateException
 	{
+		Objects.requireNonNull(regionName,"Region name cannot be null!");
+		Objects.requireNonNull(behaviour,"Behaviour cannot be null!");
+		
 		if(!regions.containsKey(regionName))
 		{
 			Logg.error("ChaosRegion " + regionName + " does not exist! Cannot set behaviour for this region in ChaosGUI " + this.name + "!");
@@ -673,6 +1163,8 @@ public abstract class ChaosBuilder
 	 */
 	public void setInterface(ChaosInterface cInterface)
 	{
+		Objects.requireNonNull(cInterface,"ChaosInterface cannot be null!");
+		
 		this.cInterface = cInterface;
 		this.cInterface.init(this);
 	}
@@ -683,6 +1175,8 @@ public abstract class ChaosBuilder
 	 */
 	private void buildInterface(InventoryView view)
 	{
+		Objects.requireNonNull(view,"InventoryView cannot be null!");
+		
 		if(cInterface == null) { return; }
 		cInterface.buildInterface(view);
 	}
@@ -721,6 +1215,8 @@ public abstract class ChaosBuilder
 	 */
 	private void buildComponents(InventoryView view)
 	{
+		Objects.requireNonNull(view,"InventoryView cannot be null!");
+		
 		for(ChaosSlot cs : this.slots.values())
 		{
 			if(!cs.isOccupied()) { continue; }
@@ -733,9 +1229,12 @@ public abstract class ChaosBuilder
 		}
 	}
 	
-	private void buildTempComponents(Player p,InventoryView view)
+	private void buildSessionComponents(Player p,InventoryView view)
 	{
-		for(ChaosSlot cs : ChaosFactory.getSession(p).getTempSlots().values())
+		Objects.requireNonNull(p,"Player cannot be null!");
+		Objects.requireNonNull(view,"InventoryView cannot be null!");
+		
+		for(ChaosSlot cs : ChaosFactory.getSession(p).getSessionSlots().values())
 		{
 			if(!cs.isOccupied()) { continue; }
 			view.setItem(cs.getRawSlot(),cs.getSlotComponent().getAppearance());
@@ -763,8 +1262,10 @@ public abstract class ChaosBuilder
 	 */
 	public void setNavigationBack(String defaultGuiToNavigateTo)
 	{
+		Objects.requireNonNull(defaultGuiToNavigateTo,"Name of GUI to navigate to cannot be null!");
+		
 		BackButton bb = new BackButton(defaultGuiToNavigateTo);
-		setStaticComponent(bb);
+		putStaticComponent(bb);
 	}
 	
 	/**
@@ -775,8 +1276,11 @@ public abstract class ChaosBuilder
 	 */
 	public void setNavigationBack(String defaultGuiToNavigateTo,int slot)
 	{
+		Objects.requireNonNull(defaultGuiToNavigateTo,"Name of GUI to navigate to cannot be null!");
+		Bouncer.requireNotNullAndInRange(slot,0,54,"Slot cannot be null and must be a valid slot between 0 and 54!");
+		
 		BackButton bb = new BackButton(defaultGuiToNavigateTo,slot);
-		setStaticComponent(bb);
+		putStaticComponent(bb);
 	}
 	
 	/**
@@ -786,7 +1290,9 @@ public abstract class ChaosBuilder
 	 * @param mode PaintMode
 	 */
 	public void setFill(Material mat)
-	{		
+	{	
+		Objects.requireNonNull(mat,"Material cannot be null!");
+		
 		this.fillMaterial = mat;
 	}
 	
@@ -815,6 +1321,8 @@ public abstract class ChaosBuilder
 	 */
 	public void removeViewer(Player p)
 	{
+		Objects.requireNonNull(p,"Player cannot be null!");
+		
 		removeViewer(p.getUniqueId());
 	}
 	
@@ -824,6 +1332,8 @@ public abstract class ChaosBuilder
 	 */
 	public void removeViewer(UUID uuid)
 	{
+		Objects.requireNonNull(uuid,"UUID cannot be null!");
+		
 		this.viewers.remove(uuid);
 	}
 	
@@ -855,110 +1365,15 @@ public abstract class ChaosBuilder
 	}
 	
 	/**
-	 * Sets GUI decoration
-	 * @param decor The decor type to set
-	 * @param occupyingSlots The slots where this decor will be displayed in
-	 */
-	public void setDecor(DecorType decor,int... occupyingSlots)
-	{
-		if(!ChaosDecor.isCompatibleForDecor(template,decor))
-		{
-			Logg.warn("ChaosGUI " + this.name + " has defined a decor of " + decor.toString() + " but is not suitable for the template " + this.template.toString() + "!");
-			return;
-		}
-		
-		if(occupyingSlots == null || occupyingSlots.length == 0)
-		{
-			Logg.error("ChaosGUI " + this.name + " has defined a decor of " + decor.toString() + " but no slots have been specified as to where this decor should be set!");
-			return;
-		}
-		
-		decorRegions.put(decor.getLocation(),new Pair<>(decor,decor.getRegionName()));
-		defineRegion(decor.getRegionName(),occupyingSlots[0],occupyingSlots);
-	}
-	
-	/**
-	 * Sets GUI decoration
-	 * @param decor The decor type to set
-	 * @param occupyingSlots The slots where this decor will be displayed in
-	 */
-	public void setDecor(DecorType decor)
-	{
-		if(!ChaosDecor.isCompatibleForDecor(template,decor))
-		{
-			Logg.warn("ChaosGUI " + this.name + " has defined a decor of " + decor.toString() + " but is not suitable for the template " + this.template.toString() + "!");
-			return;
-		}
-		
-		int[] occupyingSlots;
-		
-		if(decor.getLocation() == DecorLocation.HEADER)
-		{
-			occupyingSlots = new int[] {0,1,2,3,4,5,6,7,8};
-		}
-		else
-		{
-			occupyingSlots = new int[] {45,46,47,48,49,50,51,52,53};
-		}
-		
-		if(occupyingSlots == null || occupyingSlots.length == 0)
-		{
-			Logg.error("ChaosGUI " + this.name + " has defined a decor of " + decor.toString() + " but no slots have been specified as to where this decor should be set!");
-			return;
-		}
-		
-		decorRegions.put(decor.getLocation(),new Pair<>(decor,decor.getRegionName()));
-		defineRegion(decor.getRegionName(),occupyingSlots[0],occupyingSlots);
-	}
-	
-	/**
-	 * Builds decor for the GUI
-	 * @param view InventoryView
-	 */
-	private void buildDecor(InventoryView view)
-	{
-		for(Pair<DecorType,String> decor : decorRegions.values())
-		{
-			if(!ChaosDecor.isCompatibleForDecor(template,decor.getValueA()))
-			{
-				Logg.warn("ChaosGUI " + this.name + " has defined a decor of " + decor.getValueA().toString() + " but is not suitable for the template " + this.template.toString() + "!");
-				continue;
-			}
-			
-			if(!regions.containsKey(decor.getValueB()))
-			{
-				Logg.error("ChaosGUI " + this.name + " has defined a decor region of " + decor.getValueA().getRegionName() + " but this region cannot be found in this builders region map!");
-				continue;
-			}
-			
-			ChaosRegion decorRegion = regions.get(decor.getValueB());
-			Set<Integer> area = decorRegion.getArea();
-			LinkedList<Material> materials = ChaosDecor.getDecor(decor.getValueA(),area.size()); 
-			
-			for(int slot : area)
-			{
-				Material mat = materials.remove(0);
-				
-				if(view.getItem(slot) == null)
-				{
-					ItemStack stack = ItemBuilder.of(mat).name(" ").create();
-					view.setItem(slot,stack);
-					continue;
-				}
-				
-				// Do not override set slots
-				//view.getItem(slot).setType(mat);
-			}
-		}
-	}
-	
-	/**
 	 * Set the sound to play when the GUI opens
 	 * @param sound Sound
 	 * @param pitch pitch
 	 */
 	public void setOpenSound(Sound sound,float pitch)
 	{
+		Objects.requireNonNull(sound,"Sound cannot be null!");
+		Objects.requireNonNull(pitch,"Pitch cannot be null!");
+		
 		openSoundMixer = new SoundUtils().new SoundMixer(sound,pitch);
 	}
 	
@@ -979,6 +1394,9 @@ public abstract class ChaosBuilder
 	 */
 	public void setCloseSound(Sound sound,float pitch)
 	{
+		Objects.requireNonNull(sound,"Sound cannot be null!");
+		Objects.requireNonNull(pitch,"Pitch cannot be null!");
+		
 		closeSoundMixer = new SoundUtils().new SoundMixer(sound,pitch);
 	}
 	
@@ -996,19 +1414,26 @@ public abstract class ChaosBuilder
 	{
 		return GUIPrefix;
 	}
-
-	public void setGUIPrefix(String gUIPrefix)
+	
+	public void setGUIPrefix(String guiPrefix)
 	{
-		GUIPrefix = gUIPrefix;
+		Objects.requireNonNull(guiPrefix,"Sound cannot be null!");
+		
+		GUIPrefix = guiPrefix;
 	}
 	
 	public void refresh(Player p)
 	{
+		Objects.requireNonNull(p,"Sound cannot be null!");
+		
 		build(p);
 	}
 	
 	public void refreshPaginator(InventoryView view,Player p)
 	{
+		Objects.requireNonNull(view,"View cannot be null!");
+		Objects.requireNonNull(p,"Player cannot be null!");
+		
 		if(!hasInterface()) { return; }
 		if(this.cInterface.getType() != ChaosInterface.Type.PAGINATOR) { return; }
 		
@@ -1016,5 +1441,70 @@ public abstract class ChaosBuilder
 		ChaosFactory.clearGUI(view,paginator.getPageSlots());
 		cInterface.buildInterface(view);
 		ChaosFactory.signGUI(view);
+	}
+	
+	/**
+	 * Nest a GUI inside this one
+	 * @param nestedBuilder A nested builder with the NestedChaosGUI annotation
+	 * @param nestedBuilderName Name of the nested builder
+	 */
+	public void nest(ChaosBuilder nestedBuilder,String nestedBuilderName)
+	{
+		Objects.requireNonNull(nestedBuilder,"Nested builder cannot be null!");
+		Objects.requireNonNull(nestedBuilderName,"Nested builder name cannot be null!");
+		
+		nestedBuilder.constructAsNested(this,nestedBuilderName);
+	}
+	
+	public void drawNest(String nestedBuilderName,Player player)
+	{
+		Objects.requireNonNull(nestedBuilderName,"Nested builder name cannot be null!");
+		Objects.requireNonNull(player,"Player cannot be null!");
+		
+		if(!getNestedGUIs().containsKey(nestedBuilderName))
+		{
+			Logg.error("Nested GUI '" + nestedBuilderName + "' doesn't exist!");
+			return;
+		}
+		
+		getNestedGUIs().get(nestedBuilderName).buildNested(player);
+	}
+	
+	public boolean isNested()
+	{
+		return nested;
+	}
+
+	public Map<String,ChaosBuilder> getNestedGUIs()
+	{
+		if(nestedGUIs == null) { nestedGUIs = new HashMap<>(); }
+		return nestedGUIs;
+	}
+
+	public void addNestedGUI(ChaosBuilder nestedBuilder)
+	{
+		Objects.requireNonNull(nestedBuilder,"Nested builder cannot be null!");
+		
+		if(nestedGUIs == null) { nestedGUIs = new HashMap<>(); }
+		nestedGUIs.put(nestedBuilder.getName(),nestedBuilder);
+	}
+	
+	public void removeNestedGUI(String nestedBuilderName)
+	{
+		Objects.requireNonNull(nestedBuilderName,"Nested builder name cannot be null!");
+		
+		if(nestedGUIs == null) { return; }
+		nestedGUIs.remove(nestedBuilderName);
+	}
+	
+	/**
+	 * Convenient method to grab session from ChaosFactory
+	 * @param p Player
+	 * @return GUISession
+	 */
+	public static GUISession getSession(Player p)
+	{
+		Objects.requireNonNull(p,"Player cannot be null!");
+		return ChaosFactory.getSession(p);
 	}
 }

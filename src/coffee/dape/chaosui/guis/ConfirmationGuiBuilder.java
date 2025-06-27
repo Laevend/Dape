@@ -24,7 +24,7 @@ public class ConfirmationGuiBuilder extends ChaosBuilder
 	@Override
 	public void init()
 	{
-		setStaticComponent(new Button(0,ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+		putStaticComponent(new Button(0,ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
 				.name("Confirm",ColourUtils.TEXT_SUCCESS)
 				.create(),new ChaosActionListener()
 		{
@@ -35,7 +35,7 @@ public class ConfirmationGuiBuilder extends ChaosBuilder
 			}
 		}));
 		
-		setStaticComponent(new Button(1,ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
+		putStaticComponent(new Button(1,ItemBuilder.of(Material.LIME_STAINED_GLASS_PANE)
 				.name("Confirm",ColourUtils.TEXT_SUCCESS)
 				.create(),new ChaosActionListener()
 		{
@@ -46,11 +46,11 @@ public class ConfirmationGuiBuilder extends ChaosBuilder
 			}
 		}));
 		
-		setStaticComponent(new Button(2,ItemBuilder.of(HeadUtils.INFO_ICON.clone())
+		putStaticComponent(new Button(2,ItemBuilder.of(HeadUtils.INFO_ICON.clone())
 				.name("Confirmation",ColourUtils.VISTA_BLUE)
 				.create()));
 		
-		setStaticComponent(new Button(3,ItemBuilder.of(Material.RED_STAINED_GLASS_PANE)
+		putStaticComponent(new Button(3,ItemBuilder.of(Material.RED_STAINED_GLASS_PANE)
 				.name("Cancel",ColourUtils.TEXT_ERROR)
 				.create(),new ChaosActionListener()
 		{
@@ -61,7 +61,7 @@ public class ConfirmationGuiBuilder extends ChaosBuilder
 			}
 		}));
 		
-		setStaticComponent(new Button(4,ItemBuilder.of(Material.RED_STAINED_GLASS_PANE)
+		putStaticComponent(new Button(4,ItemBuilder.of(Material.RED_STAINED_GLASS_PANE)
 				.name("Cancel",ColourUtils.TEXT_ERROR)
 				.create(),new ChaosActionListener()
 		{

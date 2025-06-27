@@ -65,7 +65,7 @@ public class ChatInputHandler
 				continue;
 			}
 			
-			Class<?> methodParam = method.getParameters()[0].getType();			
+			Class<?> methodParam = method.getParameters()[0].getType();
 			
 			// Check that parameter is a ChatInputEvent
 			if(!methodParam.getCanonicalName().equals(ChatInputEvent.class.getCanonicalName()))

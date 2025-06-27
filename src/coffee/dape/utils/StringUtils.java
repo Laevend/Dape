@@ -1,5 +1,6 @@
 package coffee.dape.utils;
 
+import java.security.SecureRandom;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -91,24 +92,6 @@ public class StringUtils
 		}
 		
 		return sb.toString().substring(0,sb.toString().length() - 2);
-	}
-	
-	/**
-	 * Takes a string array and returns a string with
-	 * spaces in-between each array value
-	 * @param s String array
-	 * @return String
-	 */
-	public static String arrayToString(String[] s)
-	{
-		StringBuilder sb = new StringBuilder();
-		
-		for(String value : s)
-		{
-			sb.append(value + " ");
-		}
-		
-		return sb.toString().substring(0,sb.toString().length() - 1);
 	}
 	
 	public static boolean isNotNullEmptyOrBlank(String s)
@@ -302,7 +285,7 @@ public class StringUtils
     			String toAdd = finalLoreLineBuffer.substring(0,lastSpaceCharIndex);
     			
     			// Add colour and lore line to lore list
-    			loreList.add(ColourUtils.transCol(toAdd));
+    			loreList.add(ColourUtils.translate(toAdd));
     			
     			// reset buffers
         		finalLoreLineBuffer.setLength(0);
@@ -327,7 +310,7 @@ public class StringUtils
     	
     	if(finalLoreLineBuffer.length() > 0)
     	{
-    		loreList.add(ColourUtils.transCol(finalLoreLineBuffer.toString()));
+    		loreList.add(ColourUtils.translate(finalLoreLineBuffer.toString()));
     	}
         
         return loreList;
@@ -393,18 +376,56 @@ public class StringUtils
 		
 		List<String> wrappedLore = new ArrayList<>();
 		char[] loreArr = text.toCharArray();
-		char[] lastColourSet = new char[2];
 		int currentCharsInLine = 0;
 		int subStringFromIndex = 0;
 		int lastWhitespaceIndex = 0;
 		
-		System.out.println("AND " + AND_SIGN);
-		System.out.println("SECTION " + SECTION_SIGN);
+		// Holds the combination of colour codes that make up the last colour found in the text
+		StringBuilder lastColourBuffer = new StringBuilder(60);
+		
+		char nextChar;
+		
+		char nextSign;
+		char nextColour;
 		
 		for(int i = 0; i < loreArr.length; i++)
 		{
 			// Get next character
-			char nextChar = loreArr[i];
+			nextChar = loreArr[i];
+			
+			// If character is an and or section sign (meaning next character might be a colour code) 
+			if((nextChar == AND_SIGN || nextChar == SECTION_SIGN)
+					// Check the and or section sign is not being negated by a backslash (its functional use should be ignored)
+					&& loreArr[i == 0 ? 0 : (i-1)] != BACKSLASH_SIGN 
+					// Check the following character after the and or section sign is a valid colour code
+					&& COLOUR_CODES.contains(loreArr[i + 1 > (loreArr.length - 1) ? (loreArr.length - 1) : i + 1]))
+			{
+				// Set colour buffer to 0
+				lastColourBuffer.setLength(0);
+				
+				// Capture next colour
+				nextSign = nextChar;
+				nextColour = loreArr[i + 1 > (loreArr.length - 1) ? (loreArr.length - 1) : i + 1];
+				
+				// Check ahead in the array as gradients and custom colours use many colour codes 1 after another
+				while((nextSign == AND_SIGN || nextSign == SECTION_SIGN) && COLOUR_CODES.contains(nextColour))
+				{
+					lastColourBuffer.append(String.valueOf(SECTION_SIGN) + String.valueOf(nextColour));
+					
+					i+=2;
+					nextSign = loreArr[i];
+					nextColour = loreArr[i + 1 > (loreArr.length - 1) ? (loreArr.length - 1) : i + 1];
+				}
+				
+				// Roll back 2 because the nextSign and nextColour is not a colour code
+				// -1 here instead of -2 as the iterator will add 1 on the next loop
+				i-=1;
+				continue;
+			}
+			
+			currentCharsInLine++;
+			
+			//Logg.debug("Current Chars in Line = " + currentCharsInLine + " with char [ " + nextChar + " ]");
 			
 			// Make a note of the last point we encountered whitespace
 			if(Character.isWhitespace(nextChar)) { lastWhitespaceIndex = i; }
@@ -415,14 +436,14 @@ public class StringUtils
 				// If we want to wrap on a word we can split and wrap immediately
 				if(wrapWords)
 				{
-					wrappedLore.add(text.substring(subStringFromIndex,subStringFromIndex + charsPerLine));
+					wrappedLore.add((lastColourBuffer.isEmpty() ? "" : lastColourBuffer.toString()) + text.substring(subStringFromIndex,subStringFromIndex + charsPerLine));
 					subStringFromIndex = subStringFromIndex + charsPerLine;
 					currentCharsInLine = 0;
 				}
 				// If overflow is allowed, we need to also make sure we land on a whitespace character before we can split
 				else if(overflow && Character.isWhitespace(nextChar))
 				{
-					wrappedLore.add(text.substring(subStringFromIndex,i));
+					wrappedLore.add((lastColourBuffer.isEmpty() ? "" : lastColourBuffer.toString()) + text.substring(subStringFromIndex,i));
 					subStringFromIndex = i;
 					currentCharsInLine = 0;
 				}
@@ -430,52 +451,21 @@ public class StringUtils
 				// +1 as to not include the space at the start of the new line
 				else if(!overflow)
 				{
-					wrappedLore.add(text.substring(subStringFromIndex,lastWhitespaceIndex + 1));
+					wrappedLore.add((lastColourBuffer.isEmpty() ? "" : lastColourBuffer.toString()) + text.substring(subStringFromIndex,lastWhitespaceIndex + 1));
 					subStringFromIndex = lastWhitespaceIndex + 1;
 					currentCharsInLine = 0;
 				}
 			}
-			
-			System.out.println();
-			
-			System.out.println("Con1 " + (nextChar == AND_SIGN || nextChar == SECTION_SIGN));
-			System.out.println("Con2 " + (loreArr[i == 0 ? 0 : (i-1)] != BACKSLASH_SIGN));
-			System.out.println("Con3 " + COLOUR_CODES.contains(loreArr[i + 1 > (loreArr.length - 1) ? (loreArr.length - 1) : i + 1]));
-			
-			System.out.println("Con2Extra: '" + loreArr[i == 0 ? 0 : (i-1)] + "'");
-			System.out.println("Con3Extra: '" + loreArr[i + 1 > (loreArr.length - 1) ? (loreArr.length - 1) : i + 1] + "'");
-			
-			// If character is an and or section sign (meaning next character might be a colour code) 
-			if((nextChar == AND_SIGN || nextChar == SECTION_SIGN)
-					// Check the and or section sign is not being negated by a backslash (its functional use should be ignored)
-					&& loreArr[i == 0 ? 0 : (i-1)] != BACKSLASH_SIGN 
-					// Check the following character after the and or section sign is a valid colour code
-					&& COLOUR_CODES.contains(loreArr[i + 1 > (loreArr.length - 1) ? (loreArr.length - 1) : i + 1]))
-			{
-				// Check ahead in the array as gradients and custom colours use many colour codes 1 after another
-				char nextSign = loreArr[i + 2 > (loreArr.length - 1) ? (loreArr.length - 1) : i + 2];
-				char nextColour = loreArr[i + 3 > (loreArr.length - 1) ? (loreArr.length - 1) : i + 3];
-				
-				// Multiple colours so skip to the most recent one
-				while((nextSign == AND_SIGN || nextSign == SECTION_SIGN) && COLOUR_CODES.contains(nextColour))
-				{
-					i+=2;
-					nextSign = loreArr[i + 2 > (loreArr.length - 1) ? (loreArr.length - 1) : i + 2];
-					nextColour = loreArr[i + 3 > (loreArr.length - 1) ? (loreArr.length - 1) : i + 3];
-				}
-				
-				lastColourSet[0] = nextSign;
-				lastColourSet[1] = nextColour;
-				i++;
-				continue;
-			}
-			
-			System.out.println("Chars in line: " + currentCharsInLine);
-			System.out.println("Current char " + nextChar);
-			currentCharsInLine++;
 		}
 		
-		wrappedLore.add(text.substring(subStringFromIndex,loreArr.length));
+		wrappedLore.add((lastColourBuffer.isEmpty() ? "" : lastColourBuffer.toString()) + text.substring(subStringFromIndex,loreArr.length));
+		
+		// Removal of back slashes
+		for(int i = 0; i < wrappedLore.size(); i++)
+		{
+			wrappedLore.set(i,wrappedLore.get(i).replaceAll("\\\\",""));
+		}
+		
 		return wrappedLore;
 	}
 	
@@ -554,6 +544,21 @@ public class StringUtils
 		}
 		
 		return wrappedText;
+	}
+	
+	private static String ALPHANUMERIC = "123456789abcdefghijklmnopqrstuvwxyz";
+	
+	public static String getRandomAlphaNumeric(int chars)
+	{
+		StringBuilder sb = new StringBuilder();
+		SecureRandom sRand = new SecureRandom();
+		
+		for(int i = 0; i < chars; i++)
+		{
+			sb.append(ALPHANUMERIC.charAt(sRand.nextInt(ALPHANUMERIC.length())));
+		}
+		
+		return sb.toString();
 	}
 	
 	/**

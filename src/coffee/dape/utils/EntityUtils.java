@@ -1,12 +1,17 @@
 package coffee.dape.utils;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 
 import coffee.dape.utils.clocks.LimitedCyclesClock;
@@ -15,10 +20,44 @@ public class EntityUtils
 {
 	private static int transitionSteps = 30;
 	private static final Map<UUID,ScaleTransitionClock> transitionClock = new HashMap<>();
+	public static Set<EntityType> LIVING_ENTITIES = new HashSet<>();
+	
+	public static void collectLivingEntities()
+	{
+		for(EntityType type : EntityType.values())
+		{
+			Class<? extends Entity> entityClass = type.getEntityClass();
+			
+			if(getAllExtendedOrImplementedInterfacesRecursively(entityClass).contains(LivingEntity.class))
+			{
+				LIVING_ENTITIES.add(type);
+			}
+		}
+	}
+	
+	private static Set<Class<?>> getAllExtendedOrImplementedInterfacesRecursively(Class<?> clazz)
+	{
+		if(clazz == null) { return Set.of(); }
+		
+	    Set<Class<?>> res = new HashSet<Class<?>>();
+	    Class<?>[] interfaces = clazz.getInterfaces();
+
+	    if(interfaces.length > 0)
+	    {
+	        res.addAll(Arrays.asList(interfaces));
+
+	        for (Class<?> interfaze : interfaces)
+	        {
+	            res.addAll(getAllExtendedOrImplementedInterfacesRecursively(interfaze));
+	        }
+	    }
+	    
+	    return res;
+	}
 	
 	public static void setSize(LivingEntity livingEntity,double newScale)
 	{
-		final double currentScale = Objects.requireNonNull(livingEntity.getAttribute(Attribute.GENERIC_SCALE)).getBaseValue();
+		final double currentScale = Objects.requireNonNull(livingEntity.getAttribute(Attribute.SCALE)).getBaseValue();
 		
 		if(currentScale == newScale) { return; }
 		
@@ -30,50 +69,50 @@ public class EntityUtils
 		
 		transitionClock.put(livingEntity.getUniqueId(),new ScaleTransitionClock(livingEntity,newScale,transitionSteps));
 		
-	    if(livingEntity.getAttribute(Attribute.GENERIC_JUMP_STRENGTH) != null)
+	    if(livingEntity.getAttribute(Attribute.JUMP_STRENGTH) != null)
 	    {
-	        livingEntity.getAttribute(Attribute.GENERIC_JUMP_STRENGTH).setBaseValue(getValidBase(0.41D,32,newScale));
-	        livingEntity.getAttribute(Attribute.GENERIC_JUMP_STRENGTH).setBaseValue(Math.max(getValidBase(0.41D,32,newScale),0.2));
+	        livingEntity.getAttribute(Attribute.JUMP_STRENGTH).setBaseValue(getValidBase(0.41D,32,newScale));
+	        livingEntity.getAttribute(Attribute.JUMP_STRENGTH).setBaseValue(Math.max(getValidBase(0.41D,32,newScale),0.2));
 	    }
 	    
-		if(livingEntity.getAttribute(Attribute.PLAYER_BLOCK_INTERACTION_RANGE) != null)
+		if(livingEntity.getAttribute(Attribute.BLOCK_INTERACTION_RANGE) != null)
 		{
-		    livingEntity.getAttribute(Attribute.PLAYER_BLOCK_INTERACTION_RANGE).setBaseValue(getValidBase(4.5D,64,newScale));
+		    livingEntity.getAttribute(Attribute.BLOCK_INTERACTION_RANGE).setBaseValue(getValidBase(4.5D,64,newScale));
 		}
 		
-		if(livingEntity.getAttribute(Attribute.PLAYER_ENTITY_INTERACTION_RANGE) != null)
+		if(livingEntity.getAttribute(Attribute.ENTITY_INTERACTION_RANGE) != null)
 		{
-		    livingEntity.getAttribute(Attribute.PLAYER_ENTITY_INTERACTION_RANGE).setBaseValue(getValidBase(3D,64,newScale));
+		    livingEntity.getAttribute(Attribute.ENTITY_INTERACTION_RANGE).setBaseValue(getValidBase(3D,64,newScale));
 		}
 		
-		if(livingEntity.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED) != null)
+		if(livingEntity.getAttribute(Attribute.MOVEMENT_SPEED) != null)
 		{
-		    livingEntity.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(Math.max(getValidBase(0.1D,1024,newScale),0.03));
+		    livingEntity.getAttribute(Attribute.MOVEMENT_SPEED).setBaseValue(Math.max(getValidBase(0.1D,1024,newScale),0.03));
 		}
 		
-		if(livingEntity.getAttribute(Attribute.GENERIC_FLYING_SPEED) != null)
+		if(livingEntity.getAttribute(Attribute.FLYING_SPEED) != null)
 		{
-		    livingEntity.getAttribute(Attribute.GENERIC_FLYING_SPEED).setBaseValue(Math.max(getValidBase(0.1D,1024,newScale),0.03));
+		    livingEntity.getAttribute(Attribute.FLYING_SPEED).setBaseValue(Math.max(getValidBase(0.1D,1024,newScale),0.03));
 		}
 		
-		if(livingEntity.getAttribute(Attribute.GENERIC_STEP_HEIGHT) != null)
+		if(livingEntity.getAttribute(Attribute.STEP_HEIGHT) != null)
 		{
-		    livingEntity.getAttribute(Attribute.GENERIC_STEP_HEIGHT).setBaseValue(getValidBase(0.6D,10,newScale));
+		    livingEntity.getAttribute(Attribute.STEP_HEIGHT).setBaseValue(getValidBase(0.6D,10,newScale));
 		}
 		
-		if(livingEntity.getAttribute(Attribute.GENERIC_SAFE_FALL_DISTANCE) != null)
+		if(livingEntity.getAttribute(Attribute.SAFE_FALL_DISTANCE) != null)
 		{
-		    livingEntity.getAttribute(Attribute.GENERIC_SAFE_FALL_DISTANCE).setBaseValue(getValidBase(3.0D,1024,newScale));
+		    livingEntity.getAttribute(Attribute.SAFE_FALL_DISTANCE).setBaseValue(getValidBase(3.0D,1024,newScale));
 		}
 		
-		if(livingEntity.getAttribute(Attribute.GENERIC_GRAVITY) != null)
+		if(livingEntity.getAttribute(Attribute.GRAVITY) != null)
 		{
-		    livingEntity.getAttribute(Attribute.GENERIC_GRAVITY).setBaseValue(Math.max(getValidBase(0.08D,1,newScale),-1));
+		    livingEntity.getAttribute(Attribute.GRAVITY).setBaseValue(Math.max(getValidBase(0.08D,1,newScale),-1));
 		}
 		
-		if(livingEntity.getAttribute(Attribute.GENERIC_WATER_MOVEMENT_EFFICIENCY) != null)
+		if(livingEntity.getAttribute(Attribute.WATER_MOVEMENT_EFFICIENCY) != null)
 		{
-		    livingEntity.getAttribute(Attribute.GENERIC_WATER_MOVEMENT_EFFICIENCY).setBaseValue(Math.max(getValidBase(0.1D,1,newScale),0.03));
+		    livingEntity.getAttribute(Attribute.WATER_MOVEMENT_EFFICIENCY).setBaseValue(Math.max(getValidBase(0.1D,1,newScale),0.03));
 		}
     }
 	
@@ -98,7 +137,7 @@ public class EntityUtils
 			super("ScaleTransitionClock for " + le.getName(),1,cycles);
 			this.uuid = le.getUniqueId();
 			this.le = le;
-			this.currentScale = le.getAttribute(Attribute.GENERIC_SCALE).getBaseValue();
+			this.currentScale = le.getAttribute(Attribute.SCALE).getBaseValue();
 			this.bigger = newScale > currentScale;
 			this.newScale = newScale;
 			start();
@@ -122,14 +161,14 @@ public class EntityUtils
 	        }
 	        
 	        if(le == null || le.isDead()) { stop(); transitionClock.remove(this.uuid); return; }
-	        Objects.requireNonNull(le.getAttribute(Attribute.GENERIC_SCALE)).setBaseValue(MathUtils.clamp(0.0625d,16d,scale.get()));
+	        Objects.requireNonNull(le.getAttribute(Attribute.SCALE)).setBaseValue(MathUtils.clamp(0.0625d,16d,scale.get()));
 		}
 
 		@Override
 		public void finalExecute() throws Exception
 		{
 			if(le == null || le.isDead()) { stop(); transitionClock.remove(this.uuid); return; }
-			if(le.getAttribute(Attribute.GENERIC_SCALE) != null) { le.getAttribute(Attribute.GENERIC_SCALE).setBaseValue(MathUtils.clamp(0.0625d,16d,newScale)); }
+			if(le.getAttribute(Attribute.SCALE) != null) { le.getAttribute(Attribute.SCALE).setBaseValue(MathUtils.clamp(0.0625d,16d,newScale)); }
 			transitionClock.remove(this.uuid);
 		}
     }

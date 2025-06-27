@@ -39,6 +39,17 @@ public class GradientUtils
 	/**
 	 * Generates in-between colours using the colours in the list provided into a gradient line
 	 * @param lineLength The length of the line
+	 * @param gradient The Linear gradient applied from left to right in order of each colour
+	 * @return A string with the linear gradient applied
+	 */
+	public static String generateGradientLine(int lineLength,LinearGradient gradient)
+	{
+		return generateGradientLine(lineLength,gradient.getGradientColours());
+	}
+	
+	/**
+	 * Generates in-between colours using the colours in the list provided into a gradient line
+	 * @param lineLength The length of the line
 	 * @param colours The list of colours used to create a linear gradient applied from left to right in order of each colour
 	 * @return A string with the linear gradient applied
 	 */
@@ -79,7 +90,7 @@ public class GradientUtils
 				Logg.error("No more colours! " + lineLength + " - " + gradColours.size());
 			}
 			
-			sb.append(ChatColor.of(currentColour) + ColourUtils.transCol("&m "));
+			sb.append(ChatColor.of(currentColour) + ColourUtils.translate("&m "));
 		}
 		
 		return sb.toString();

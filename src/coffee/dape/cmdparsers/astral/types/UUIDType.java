@@ -6,11 +6,11 @@ import java.util.regex.Pattern;
 /**
  * @author Laeven
  * 
- * This class defines the UUID type
+ * This class defines the UUID argument type
  */
 public class UUIDType extends ArgumentType
 {	
-	Pattern uuidPattern = Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$",Pattern.CASE_INSENSITIVE);
+	public static final Pattern uuidPattern = Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$",Pattern.CASE_INSENSITIVE);
 	
 	public UUIDType()
 	{
@@ -19,7 +19,7 @@ public class UUIDType extends ArgumentType
 	
 	public boolean isType(String argument)
 	{
-		return uuidPattern.matcher(argument).find();
+		return uuidPattern.matcher(argument).matches();
 	}
 	
 	@Override

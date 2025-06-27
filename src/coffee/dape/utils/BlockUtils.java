@@ -17,8 +17,8 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.craftbukkit.v1_21_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_21_R1.block.data.CraftBlockData;
+import org.bukkit.craftbukkit.v1_21_R4.CraftWorld;
+import org.bukkit.craftbukkit.v1_21_R4.block.data.CraftBlockData;
 import org.bukkit.entity.Player;
 
 import net.minecraft.core.BlockPosition;
@@ -213,9 +213,29 @@ public class BlockUtils
 			// 1.20.2
 		    //BlockData ibd = block.n();
 		    
-		    IBlockData ibd = block.o();
-		    
-		    nmsChunk.setBlockState(bp,ibd,applyPhysics,true);
+			// 1.21.1
+		    //IBlockData ibd = block.o();
+			
+			IBlockData ibd = block.m();
+			
+			// 1.21.1
+		    //nmsChunk.setBlockState(bp,ibd,applyPhysics,true);
+			
+			// Not sure what this does but it's the new method.
+			// Last argument is now an int and it's just 'i' in the mappings.
+			// 'i' is used as follows:
+			
+            //boolean flag3 = (i & 64) != 0;
+            //boolean flag4 = (i & 256) == 0;
+             
+			//if(!this.r.C && (i & 512) == 0 && (!this.r.captureBlockStates || block instanceof BlockTileEntity))
+			//{
+			//	iblockdata.a (this.r, blockposition, iblockdata1, flag3);
+			//}
+			
+			// TODO Test with numbers to see results?
+             
+			nmsChunk.a(bp,ibd,1);
 		}
 		
 		public void setBlockInNativeDataPalette(World world,int x,int y,int z,BlockData data,boolean applyPhysics)
@@ -229,7 +249,7 @@ public class BlockUtils
 			BlockPosition bp = new BlockPosition(x,y,z);
 			IBlockData iBlockData = ((CraftBlockData) data).getState();
 		    
-		    nmsChunk.setBlockState(bp,iBlockData,applyPhysics,false);
+		    nmsChunk.a(bp,iBlockData,1);
 		}
 	}
 }

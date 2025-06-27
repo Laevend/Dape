@@ -18,10 +18,9 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
-import coffee.dape.Dape;
+import coffee.dape.cmdparsers.astral.annos.CmdPath;
 import coffee.dape.cmdparsers.astral.annos.CommandEx;
 import coffee.dape.cmdparsers.astral.annos.Elevated;
-import coffee.dape.cmdparsers.astral.annos.Path;
 import coffee.dape.cmdparsers.astral.annos.VMap;
 import coffee.dape.cmdparsers.astral.elevatedaccount.ElevatedAccountCtrl;
 import coffee.dape.cmdparsers.astral.elevatedaccount.PendingCommand;
@@ -116,9 +115,9 @@ public class AstralExecutor implements CommandExecutor, TabCompleter
 			if(method.getName().contains("$")) { continue; }
 			
 			// Ignore methods with no path annotation
-			if(!method.isAnnotationPresent(Path.class)) { continue; }
+			if(!method.isAnnotationPresent(CmdPath.class)) { continue; }
 			
-			Path pathAnno = method.getAnnotation(Path.class);
+			CmdPath pathAnno = method.getAnnotation(CmdPath.class);
 			
 			if(!StringUtils.isNotNullEmptyOrBlank(pathAnno.name()))
 			{
@@ -260,7 +259,7 @@ public class AstralExecutor implements CommandExecutor, TabCompleter
 	 */
 	private PathMeta populateMeta(PathMeta meta,Method pathLogicMethod)
 	{
-		Path pathAnno = pathLogicMethod.getAnnotation(Path.class);
+		CmdPath pathAnno = pathLogicMethod.getAnnotation(CmdPath.class);
 		
 		meta.setPathName(pathAnno.name());
 		meta.setDescription(pathAnno.description());
@@ -390,7 +389,7 @@ public class AstralExecutor implements CommandExecutor, TabCompleter
 		if(!sender.hasPermission(cmd.getPermission()) && !sender.hasPermission(CommandFactory.getGroupPermission(this.getGroup())))
 		{
 			// If astral has been configured to allow command execution of commands in the default group without needing their permissions
-			if(Dape.getConfigFile().getBoolean(CommandFactory.CFG_DEFAULT_GROUP_PERMISSION_NEEDED) && this.getGroup().equals("default"))
+			if(CommandFactory.Config.DEFAULT_GROUP_PERMISSION_NEEDED.get() && this.getGroup().equals("default"))
 			{
 				break PermissionCheck;
 			}
@@ -412,7 +411,7 @@ public class AstralExecutor implements CommandExecutor, TabCompleter
 			PrintUtils.error(sender,"Parser failed execution! Command may have bad architecture!");
 			PrintUtils.error(sender,"Notify an administrator immediately!");
 			Logg.error("Parser threw an exception! Command '" + cmd.getName() + "' may have bad architecture!",e);
-			Logg.error("Causes of bad command architecture:\n"
+			Logg.error("Common causes of bad command architecture:\n"
 					+ " - Syntax name and Syntax logic method name are not the same,\n"
 					+ " - Syntax is defined but no Syntax logic method is found,\n"
 					+ " - Syntax logic method exists but no Syntax is defined for that method,\n"
@@ -460,13 +459,21 @@ public class AstralExecutor implements CommandExecutor, TabCompleter
 					{
 						try
 						{
+							// Check elevated account has any authentication methods
+							if(ElevatedAccountCtrl.getAccount(p.getUniqueId()).getAuthMethods().isEmpty())
+							{
+								Logg.error("This command requires elevation! But this user has no methods of authentication!");
+								PrintUtils.error(p,"This command requires elevation! But you have no methods of authentication!");
+								return true;
+							}
+							
 							ElevatedAccountCtrl.getAccount(p.getUniqueId()).setPendingCommand(new PendingCommand(sender,cmd,label,args,this,System.currentTimeMillis()));
-							PrintUtils.warn(pr.getSender(),"This command requires elevation!");
+							PrintUtils.warn(pr.getSender(),"This command requires elevation!");							
 							PrintUtils.info(p,ElevatedAccountCtrl.getAccount(p.getUniqueId()).getAuthMethods().getFirst().getAuthMessage());
 						}
 						catch (IllegalMethodCallException e)
 						{
-							e.printStackTrace();
+							Logg.error("Unexpected bad method call",e);
 						}
 						
 						return true;
@@ -483,7 +490,7 @@ public class AstralExecutor implements CommandExecutor, TabCompleter
 						}
 						catch (IllegalMethodCallException e)
 						{
-							e.printStackTrace();
+							Logg.error("Unexpected bad method call",e);
 						}
 						
 						return true;
@@ -504,7 +511,7 @@ public class AstralExecutor implements CommandExecutor, TabCompleter
 			catch(Exception e)
 			{
 				PrintUtils.error(sender,"Command failed to execute properly! You entered bad arguments!");
-				PrintUtils.raw(sender,ColourUtils.transCol("&fUsage&8: &e/help " + cmd.getName()));
+				PrintUtils.raw(sender,ColourUtils.translate("&fUsage&8: &e/help " + cmd.getName()));
 				Logg.error("Command '" + cmd.getName() + "' failed to execute correctly!",e);
 			}
 		}
@@ -516,11 +523,11 @@ public class AstralExecutor implements CommandExecutor, TabCompleter
 		}
 		else
 		{
-			PrintUtils.raw(sender,ColourUtils.transCol("&3> &cIncorrect syntax! Type &e/help <command> &cfor more information"));			
+			PrintUtils.raw(sender,ColourUtils.translate("&3> &cIncorrect syntax! Type &e/help <command> &cfor more information"));			
 			
 			if(CommandParser.flagMessage == null) { return true; }
 			
-			PrintUtils.raw(sender,ColourUtils.transCol("&3> &c" + CommandParser.flagMessage));
+			PrintUtils.raw(sender,ColourUtils.translate("&3> &c" + CommandParser.flagMessage));
 			CommandParser.flagMessage = null;
 		}
 		

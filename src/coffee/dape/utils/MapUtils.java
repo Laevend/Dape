@@ -24,7 +24,7 @@ import javax.imageio.ImageIO;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.craftbukkit.v1_21_R1.map.CraftMapView;
+import org.bukkit.craftbukkit.v1_21_R4.map.CraftMapView;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -68,7 +68,7 @@ public class MapUtils
 		{
 			try
 			{			
-				FileOpUtils.createDirectories(mapImagesPath);
+				FUtils.createDirectories(mapImagesPath);
 				UUID imageId = UUID.randomUUID();
 				Path filePath = Paths.get(mapImagesPath.toString() + File.separator + imageId.toString() + ".png");
 				ImageIO.write(img,"png",filePath.toFile());
@@ -85,7 +85,7 @@ public class MapUtils
 		public static void load()
 		{
 			imgs.clear();
-			List<String> csv = FileOpUtils.readCSV(mapDataPath);
+			List<String> csv = FUtils.readCSV(mapDataPath);
 			
 			for(String csvLine : csv)
 			{
@@ -110,7 +110,7 @@ public class MapUtils
 				csv.add(entry.getKey() + "," + entry.getValue().getId().toString());
 			}
 			
-			FileOpUtils.writeCSV(mapDataPath,csv);
+			FUtils.writeCSV(mapDataPath,csv);
 		}
 		
 		// Instance of a MapImage. Depending on lazyLoading, the buffered image will already be loaded or not

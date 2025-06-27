@@ -3,6 +3,7 @@ package coffee.dape.chaosui.components;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -12,6 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import coffee.dape.chaosui.behaviour.Behaviours;
 import coffee.dape.chaosui.listeners.ChaosActionListener;
 import coffee.dape.utils.ItemUtils;
+import coffee.dape.utils.Logg;
 import coffee.dape.utils.MathUtils;
 
 /**
@@ -36,15 +38,17 @@ public class ChaosRegion
 	
 	/**
 	 * Creates a region within the GUI that occupies multiple slots
-	 * @param area Slots this region occupies
+	 * @param rawSlotsArea Slots this region occupies
 	 * @param regionName Name of this region
 	 */
-	public ChaosRegion(String regionName,int area,int... areas)
+	public ChaosRegion(String regionName,int... rawSlotsArea)
 	{
-		this.name = regionName;
-		this.area.add(area);
+		Objects.requireNonNull(regionName,"Region name cannot be null!");
+		Objects.requireNonNull(rawSlotsArea,"Raw slots area cannot be null!");
 		
-		for(int slot : areas)
+		this.name = regionName;
+		
+		for(int slot : rawSlotsArea)
 		{
 			this.area.add(slot);
 		}
@@ -57,6 +61,15 @@ public class ChaosRegion
 	 */
 	public ChaosRegion(String regionName,Set<Integer> area)
 	{
+		Objects.requireNonNull(regionName,"Region name cannot be null!");
+		Objects.requireNonNull(area,"Area cannot be null!");
+		
+		if(area.isEmpty())
+		{
+			Logg.throwIllegalArgumentError("Area must contain at least 1 slot");
+			return;
+		}
+		
 		this.name = regionName;
 		this.area.addAll(area);
 	}
@@ -69,6 +82,28 @@ public class ChaosRegion
 	 */
 	public ChaosRegion(String regionName,int startSlot,int endSlot)
 	{
+		Objects.requireNonNull(regionName,"Region name cannot be null!");
+		Objects.requireNonNull(startSlot,"Start slot cannot be null!");
+		Objects.requireNonNull(endSlot,"End slot cannot be null!");
+		
+		if(MathUtils.inclusiveRange(0,54,startSlot))
+		{
+			Logg.throwIllegalArgumentError("Start slot for a region cannot be less than 0 or more than 54!");
+			return;
+		}
+		
+		if(MathUtils.inclusiveRange(0,54,endSlot))
+		{
+			Logg.throwIllegalArgumentError("End slot for a region cannot be less than 0 or more than 54!");
+			return;
+		}
+		
+		if(startSlot >= endSlot)
+		{
+			Logg.throwIllegalArgumentError("Start slot for a region cannot be greater than or equal to the end slot!");
+			return;
+		}
+		
 		this.name = regionName;
 		this.area.addAll(MathUtils.getSetOfNumbers(startSlot,endSlot));
 	}
@@ -221,7 +256,7 @@ public class ChaosRegion
 		public static final String PAGINATOR_FOOTER = "paginator_footer";
 		public static final String PAGINATOR_BODY = "paginator_body";
 		
-		public static final String DECOR_HEADER = "decor_header";
-		public static final String DECOR_FOOTER = "decor_footer";
+		public static final String TABS_HEADER = "paginator_header";
+		public static final String TABS_BODY = "paginator_body";
 	}
 }

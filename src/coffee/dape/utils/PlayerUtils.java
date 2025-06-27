@@ -258,15 +258,15 @@ public class PlayerUtils
 	
 	public static void resetSize(Player player)
 	{
-		if(player.getAttribute(Attribute.GENERIC_SCALE) != null) { player.getAttribute(Attribute.GENERIC_SCALE).setBaseValue(1); }
-		if(player.getAttribute(Attribute.GENERIC_JUMP_STRENGTH) != null) { player.getAttribute(Attribute.GENERIC_JUMP_STRENGTH).setBaseValue(0.41D); }
-		if(player.getAttribute(Attribute.PLAYER_BLOCK_INTERACTION_RANGE) != null) { player.getAttribute(Attribute.PLAYER_BLOCK_INTERACTION_RANGE).setBaseValue(4.5D); }
-		if(player.getAttribute(Attribute.PLAYER_ENTITY_INTERACTION_RANGE) != null) { player.getAttribute(Attribute.PLAYER_ENTITY_INTERACTION_RANGE).setBaseValue(3D); }  
-		if(player.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED) != null) { player.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0.1D); }
-		if(player.getAttribute(Attribute.GENERIC_FLYING_SPEED) != null) { player.getAttribute(Attribute.GENERIC_FLYING_SPEED).setBaseValue(0.4D); }
-		if(player.getAttribute(Attribute.GENERIC_STEP_HEIGHT) != null) { player.getAttribute(Attribute.GENERIC_STEP_HEIGHT).setBaseValue(0.6D); }
-		if(player.getAttribute(Attribute.GENERIC_SAFE_FALL_DISTANCE) != null) { player.getAttribute(Attribute.GENERIC_SAFE_FALL_DISTANCE).setBaseValue(3.0D); }
-		if(player.getAttribute(Attribute.GENERIC_GRAVITY) != null) { player.getAttribute(Attribute.GENERIC_GRAVITY).setBaseValue(0.08D); }
-		if(player.getAttribute(Attribute.GENERIC_WATER_MOVEMENT_EFFICIENCY) != null) { player.getAttribute(Attribute.GENERIC_WATER_MOVEMENT_EFFICIENCY).setBaseValue(0D); }
+		if(player.getAttribute(Attribute.SCALE) != null) { player.getAttribute(Attribute.SCALE).setBaseValue(1); }
+		if(player.getAttribute(Attribute.JUMP_STRENGTH) != null) { player.getAttribute(Attribute.JUMP_STRENGTH).setBaseValue(0.41D); }
+		if(player.getAttribute(Attribute.BLOCK_INTERACTION_RANGE) != null) { player.getAttribute(Attribute.BLOCK_INTERACTION_RANGE).setBaseValue(4.5D); }
+		if(player.getAttribute(Attribute.ENTITY_INTERACTION_RANGE) != null) { player.getAttribute(Attribute.ENTITY_INTERACTION_RANGE).setBaseValue(3D); }  
+		if(player.getAttribute(Attribute.MOVEMENT_SPEED) != null) { player.getAttribute(Attribute.MOVEMENT_SPEED).setBaseValue(0.1D); }
+		if(player.getAttribute(Attribute.FLYING_SPEED) != null) { player.getAttribute(Attribute.FLYING_SPEED).setBaseValue(0.4D); }
+		if(player.getAttribute(Attribute.STEP_HEIGHT) != null) { player.getAttribute(Attribute.STEP_HEIGHT).setBaseValue(0.6D); }
+		if(player.getAttribute(Attribute.SAFE_FALL_DISTANCE) != null) { player.getAttribute(Attribute.SAFE_FALL_DISTANCE).setBaseValue(3.0D); }
+		if(player.getAttribute(Attribute.GRAVITY) != null) { player.getAttribute(Attribute.GRAVITY).setBaseValue(0.08D); }
+		if(player.getAttribute(Attribute.WATER_MOVEMENT_EFFICIENCY) != null) { player.getAttribute(Attribute.WATER_MOVEMENT_EFFICIENCY).setBaseValue(0D); }
 	}
 }

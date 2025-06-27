@@ -4,6 +4,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import coffee.dape.Dape;
 import coffee.dape.utils.Logg;
+import coffee.dape.utils.clocks.absclocks.BukkitClock;
 
 /**
  * 
@@ -11,7 +12,7 @@ import coffee.dape.utils.Logg;
  * A clock that will call {@link #execute()} after a specified interval for a number of predetermined cycles.
  * <p>After which, {@link #finalExecute()} is called and the clock stops.
  */
-public abstract class LimitedCyclesClock extends AbstractBukkitClock
+public abstract class LimitedCyclesClock extends BukkitClock
 {
 	// The the max number of cycles before stopping
 	private long cyclesLeft;

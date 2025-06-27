@@ -4,7 +4,6 @@ import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier.Operation;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_21_R1.inventory.CraftItemStack;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlotGroup;
@@ -13,7 +12,7 @@ import org.bukkit.inventory.ItemStack;
 
 import coffee.dape.Dape;
 import coffee.dape.cmdparsers.astral.annos.CommandEx;
-import coffee.dape.cmdparsers.astral.annos.Path;
+import coffee.dape.cmdparsers.astral.annos.CmdPath;
 import coffee.dape.cmdparsers.astral.parser.AstralExecutor;
 import coffee.dape.cmdparsers.astral.parser.CommandParser.CmdSender;
 import coffee.dape.exception.MissingAnnotationException;
@@ -22,7 +21,6 @@ import coffee.dape.utils.GradientUtils;
 import coffee.dape.utils.ItemBuilder;
 import coffee.dape.utils.PrintUtils;
 import coffee.dape.utils.StringUtils;
-import net.minecraft.core.component.DataComponentMap;
 
 
 /**
@@ -38,7 +36,7 @@ public final class DapeCommand extends AstralExecutor
 		addPath("version",CmdSender.ANY);
 	}
 	
-	@Path(name = "version",description = "Displays the version of Dape",syntax = "/dape",usage = "/dape")
+	@CmdPath(name = "version",description = "Displays the version of Dape",syntax = "/dape",usage = "/dape")
 	public final void version(CommandSender sender)
 	{
 		PrintUtils.info(sender,ColourUtils.applyColour(Dape.instance().getDescription().getName(),ColourUtils.RUSTY_RED));
@@ -57,15 +55,8 @@ public final class DapeCommand extends AstralExecutor
 			.enchant(Enchantment.WIND_BURST,10)
 			.flag(ItemFlag.HIDE_DESTROYS)
 			.unbreakable(true)
-			.attmod(Attribute.GENERIC_GRAVITY,EquipmentSlotGroup.OFFHAND,Operation.ADD_NUMBER,100)
+			.attmod(Attribute.GRAVITY,EquipmentSlotGroup.OFFHAND,Operation.ADD_NUMBER,100)
 			.create();
-		
-		net.minecraft.world.item.ItemStack nmsItem = CraftItemStack.asNMSCopy(stack);
-		DataComponentMap nbtItem = nmsItem.a();
-		//PatchedDataComponentMap nbtItem = nmsItem.
-		String nbt = nbtItem.toString();
-		
-		System.out.println(nbt);
 		
 		Player p = (Player) sender;
 		p.getWorld().dropItem(p.getLocation(),stack);

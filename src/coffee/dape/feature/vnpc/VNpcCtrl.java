@@ -28,7 +28,7 @@ import com.google.gson.JsonElement;
 
 import coffee.dape.Dape;
 import coffee.dape.feature.vnpc.VNpc.InteractionType;
-import coffee.dape.utils.FileOpUtils;
+import coffee.dape.utils.FUtils;
 import coffee.dape.utils.Logg;
 import coffee.dape.utils.MathUtils;
 import coffee.dape.utils.PrintUtils;
@@ -120,7 +120,7 @@ public class VNpcCtrl
 		Objects.requireNonNull(key,"UID4 cannot be null!");
 		if(!contains(key)) { return null; }
 		vnpcs.get(key).despawn();
-		FileOpUtils.delete(Paths.get(dataLocation.toAbsolutePath() + File.separator + key.toString() + ".json"));
+		FUtils.delete(Paths.get(dataLocation.toAbsolutePath() + File.separator + key.toString() + ".json"));
 		return vnpcs.remove(key);
 	}
 	

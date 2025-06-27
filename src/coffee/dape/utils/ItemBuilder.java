@@ -85,6 +85,7 @@ public class ItemBuilder
 	{
 		Objects.requireNonNull(skullTexture,"SkullTexture cannot be null!");
 		ItemBuilder ib = new ItemBuilder();
+		ib.stack = new ItemStack(Material.PLAYER_HEAD,1);
 		ib.skull(skullTexture);
 		return ib;
 	}
@@ -99,6 +100,7 @@ public class ItemBuilder
 	{
 		Objects.requireNonNull(skullTexture,"SkullTexture cannot be null!");
 		ItemBuilder ib = new ItemBuilder();
+		ib.stack = new ItemStack(Material.PLAYER_HEAD,1);
 		ib.skull(skullTexture);
 		return ib;
 	}
@@ -112,6 +114,7 @@ public class ItemBuilder
 	{
 		Objects.requireNonNull(playerUUID,"Player UUID cannot be null!");
 		ItemBuilder ib = new ItemBuilder();
+		ib.stack = new ItemStack(Material.PLAYER_HEAD,1);
 		ib.skull(playerUUID);
 		return ib;
 	}
@@ -137,7 +140,7 @@ public class ItemBuilder
 	{
 		Objects.requireNonNull(itemName,"ItemName cannot be null!");
 		ItemMeta stackMeta = stack.getItemMeta();
-        stackMeta.setDisplayName(ColourUtils.transCol("&r" + itemName));
+        stackMeta.setDisplayName(ColourUtils.translate("&r" + itemName));
         stack.setItemMeta(stackMeta);
         return this;
 	}
@@ -501,6 +504,8 @@ public class ItemBuilder
 	    {
 	    	// The URL to the skin, for example: https://textures.minecraft.net/texture/18813764b2abc94ec3c3bc67b9147c21be850cdf996679703157f4555997ea63a
 	        urlObject = URI.create(mcProfile.getTexturesProperty().getSkinURL()).toURL();
+			textures.setSkin(urlObject);
+		    profile.setTextures(textures);
 	    }
 	    catch (Exception e)
 	    {
@@ -508,8 +513,7 @@ public class ItemBuilder
 		    return this;
 	    }
 		
-		textures.setSkin(urlObject);
-	    profile.setTextures(textures);
+	    skullMeta.setOwnerProfile(profile);
 	    stack.setItemMeta(skullMeta);
 		return this;
 	}
@@ -743,7 +747,33 @@ public class ItemBuilder
 		public LoreBuilder appendAll(List<String> lore)
 		{
 			Objects.requireNonNull(lore,"Lore cannot be null!");
-			lore.forEach(loreItem -> loreList.add(ColourUtils.transCol(loreItem)));
+			lore.forEach(loreItem -> loreList.add(ColourUtils.translate(loreItem)));
+			return this;
+		}
+		
+		/**
+		 * Appends list of lore to the item stack
+		 * @param lore List of lore to add
+		 * @param gradient Gradient to apply to this lore
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder appendAll(List<String> lore,LinearGradient gradient)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			lore.forEach(loreItem -> loreList.add(GradientUtils.applyGradient(loreItem,gradient)));
+			return this;
+		}
+		
+		/**
+		 * Appends list of lore to the item stack
+		 * @param lore List of lore to add
+		 * @param colour Colour to apply to this item name
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder appendAll(List<String> lore,Color colour)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			lore.forEach(loreItem -> loreList.add(ColourUtils.applyColour(loreItem,colour)));
 			return this;
 		}
 		
@@ -755,7 +785,33 @@ public class ItemBuilder
 		public LoreBuilder append(String lore)
 		{
 			Objects.requireNonNull(lore,"Lore cannot be null!");
-			loreList.add(ColourUtils.transCol(lore));
+			loreList.add(ColourUtils.translate(lore));
+			return this;
+		}
+		
+		/**
+		 * Append lore to the item stack
+		 * @param lore Lore to add
+		 * @param gradient Gradient to apply to this lore
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder append(String lore,LinearGradient gradient)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			loreList.add(GradientUtils.applyGradient(lore,gradient));
+			return this;
+		}
+		
+		/**
+		 * Append lore to the item stack
+		 * @param lore Lore to add
+		 * @param colour Colour to apply to this item name
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder append(String lore,Color colour)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			loreList.add(ColourUtils.applyColour(lore,colour));
 			return this;
 		}
 		
@@ -767,7 +823,33 @@ public class ItemBuilder
 		public LoreBuilder appendFirst(String lore)
 		{
 			Objects.requireNonNull(lore,"Lore cannot be null!");
-			loreList.addFirst(ColourUtils.transCol(lore));
+			loreList.addFirst(ColourUtils.translate(lore));
+			return this;
+		}
+		
+		/**
+		 * Appends lore to the top of the item stack
+		 * @param lore Lore to add
+		 * @param gradient Gradient to apply to this lore
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder appendFirst(String lore,LinearGradient gradient)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			loreList.addFirst(GradientUtils.applyGradient(lore,gradient));
+			return this;
+		}
+		
+		/**
+		 * Appends lore to the top of the item stack
+		 * @param lore Lore to add
+		 * @param colour Colour to apply to this item name
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder appendFirst(String lore,Color colour)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			loreList.addFirst(ColourUtils.applyColour(lore,colour));
 			return this;
 		}
 		
@@ -779,7 +861,33 @@ public class ItemBuilder
 		public LoreBuilder appendLast(String lore)
 		{
 			Objects.requireNonNull(lore,"Lore cannot be null!");
-			loreList.addLast(ColourUtils.transCol(lore));
+			loreList.addLast(ColourUtils.translate(lore));
+			return this;
+		}
+		
+		/**
+		 * Appends lore to the bottom of the item stack
+		 * @param lore Lore to add
+		 * @param gradient Gradient to apply to this lore
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder appendLast(String lore,LinearGradient gradient)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			loreList.addLast(GradientUtils.applyGradient(lore,gradient));
+			return this;
+		}
+		
+		/**
+		 * Appends lore to the bottom of the item stack
+		 * @param lore Lore to add
+		 * @param colour Colour to apply to this item name
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder appendLast(String lore,Color colour)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			loreList.addLast(ColourUtils.applyColour(lore,colour));
 			return this;
 		}
 		
@@ -791,7 +899,78 @@ public class ItemBuilder
 		public LoreBuilder wrap(String lore)
 		{
 			Objects.requireNonNull(lore,"Lore cannot be null!");
-			loreList.addAll(StringUtils.wrapColouredText(ColourUtils.transCol(lore)));
+			loreList.addAll(StringUtils.wrapColouredText(ColourUtils.translateNoEscapeRemoval(lore)));
+			return this;
+		}
+		
+		/**
+		 * Wraps and appends lore to the item stack in line lengths of 60
+		 * @param lore Lore to add
+		 * @param gradient Gradient to apply to this lore
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder wrap(String lore,LinearGradient gradient)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			Objects.requireNonNull(gradient,"Gradient cannot be null!");
+			loreList.addAll(StringUtils.wrapColouredText(GradientUtils.applyGradient(lore,gradient)));
+			return this;
+		}
+		
+		/**
+		 * Wraps and appends lore to the item stack in line lengths of 60
+		 * @param lore lore Lore to add
+		 * @param colour Colour to apply to this item name
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder wrap(String lore,Color colour)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			Objects.requireNonNull(colour,"Gradient cannot be null!");
+			loreList.addAll(StringUtils.wrapColouredText(ColourUtils.applyColour(lore,colour)));
+			return this;
+		}
+		
+		/**
+		 * Wraps and appends lore to the item stack in line lengths of 60
+		 * @param lore Lore to add
+		 * @param charsPerLine Number of characters to fit on 1 line of lore
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder wrap(String lore,int charsPerLine)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			loreList.addAll(StringUtils.wrapColouredText(ColourUtils.translateNoEscapeRemoval(lore),charsPerLine));
+			return this;
+		}
+		
+		/**
+		 * Wraps and appends lore to the item stack in line lengths of 60
+		 * @param lore Lore to add
+		 * @param gradient Gradient to apply to this lore
+		 * @param charsPerLine Number of characters to fit on 1 line of lore
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder wrap(String lore,LinearGradient gradient,int charsPerLine)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			Objects.requireNonNull(gradient,"Gradient cannot be null!");
+			loreList.addAll(StringUtils.wrapColouredText(GradientUtils.applyGradient(lore,gradient),charsPerLine));
+			return this;
+		}
+		
+		/**
+		 * Wraps and appends lore to the item stack in line lengths of 60
+		 * @param lore lore Lore to add
+		 * @param colour Colour to apply to this item name
+		 * @param charsPerLine Number of characters to fit on 1 line of lore
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder wrap(String lore,Color colour,int charsPerLine)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			Objects.requireNonNull(colour,"Gradient cannot be null!");
+			loreList.addAll(StringUtils.wrapColouredText(ColourUtils.applyColour(lore,colour),charsPerLine));
 			return this;
 		}
 		
@@ -803,7 +982,94 @@ public class ItemBuilder
 		public LoreBuilder wrapLast(String lore)
 		{
 			Objects.requireNonNull(lore,"Lore cannot be null!");
-			for(String line : StringUtils.wrapColouredText(ColourUtils.transCol(lore)))
+			for(String line : StringUtils.wrapColouredText(ColourUtils.translateNoEscapeRemoval(lore)))
+			{
+				appendLast(line);
+			}
+			
+			return this;
+		}
+		
+		/**
+		 * Wraps and appends lore to the bottom of the item stack in line lengths of 60
+		 * @param lore Lore to add
+		 * @param gradient Gradient to apply to this lore
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder wrapLast(String lore,LinearGradient gradient)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			for(String line : StringUtils.wrapColouredText(GradientUtils.applyGradient(lore,gradient)))
+			{
+				appendLast(line);
+			}
+			
+			return this;
+		}
+		
+		/**
+		 * Wraps and appends lore to the bottom of the item stack in line lengths of 60
+		 * @param lore Lore to add
+		 * @param colour Colour to apply to this item name
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder wrapLast(String lore,Color colour)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			for(String line : StringUtils.wrapColouredText(ColourUtils.applyColour(lore,colour)))
+			{
+				appendLast(line);
+			}
+			
+			return this;
+		}
+		
+		/**
+		 * Wraps and appends lore to the bottom of the item stack in line lengths of 60
+		 * @param lore Lore to add
+		 * @param charsPerLine Number of characters to fit on 1 line of lore
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder wrapLast(String lore,int charsPerLine)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			for(String line : StringUtils.wrapColouredText(ColourUtils.translateNoEscapeRemoval(lore)))
+			{
+				appendLast(line);
+			}
+			
+			return this;
+		}
+		
+		/**
+		 * Wraps and appends lore to the bottom of the item stack in line lengths of 60
+		 * @param lore Lore to add
+		 * @param gradient Gradient to apply to this lore
+		 * @param charsPerLine Number of characters to fit on 1 line of lore
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder wrapLast(String lore,LinearGradient gradient,int charsPerLine)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			for(String line : StringUtils.wrapColouredText(GradientUtils.applyGradient(lore,gradient)))
+			{
+				appendLast(line);
+			}
+			
+			return this;
+		}
+		
+		/**
+		 * Wraps and appends lore to the bottom of the item stack in line lengths of 60
+		 * @param lore Lore to add
+		 * @param colour Colour to apply to this item name
+		 * @param charsPerLine Number of characters to fit on 1 line of lore
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder wrapLast(String lore,Color colour,int charsPerLine)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			for(String line : StringUtils.wrapColouredText(ColourUtils.applyColour(lore,colour)))
 			{
 				appendLast(line);
 			}
@@ -819,7 +1085,94 @@ public class ItemBuilder
 		public LoreBuilder wrapFirst(String lore)
 		{
 			Objects.requireNonNull(lore,"Lore cannot be null!");
-			for(String line : StringUtils.wrapColouredText(ColourUtils.transCol(lore)))
+			for(String line : StringUtils.wrapColouredText(ColourUtils.translateNoEscapeRemoval(lore)))
+			{
+				appendFirst(line);
+			}
+			
+			return this;
+		}
+		
+		/**
+		 * Wraps and appends lore to the top of the item stack in line lengths of 60
+		 * @param lore Lore to add
+		 * @param gradient Gradient to apply to this lore
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder wrapFirst(String lore,LinearGradient gradient)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			for(String line : StringUtils.wrapColouredText(GradientUtils.applyGradient(lore,gradient)))
+			{
+				appendFirst(line);
+			}
+			
+			return this;
+		}
+		
+		/**
+		 * Wraps and appends lore to the top of the item stack in line lengths of 60
+		 * @param lore Lore to add
+		 * @param colour Colour to apply to this item name
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder wrapFirst(String lore,Color colour)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			for(String line : StringUtils.wrapColouredText(ColourUtils.applyColour(lore,colour)))
+			{
+				appendFirst(line);
+			}
+			
+			return this;
+		}
+		
+		/**
+		 * Wraps and appends lore to the top of the item stack in line lengths of 60
+		 * @param lore Lore to add
+		 * @param charsPerLine Number of characters to fit on 1 line of lore
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder wrapFirst(String lore,int charsPerLine)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			for(String line : StringUtils.wrapColouredText(ColourUtils.translateNoEscapeRemoval(lore)))
+			{
+				appendFirst(line);
+			}
+			
+			return this;
+		}
+		
+		/**
+		 * Wraps and appends lore to the top of the item stack in line lengths of 60
+		 * @param lore Lore to add
+		 * @param gradient Gradient to apply to this lore
+		 * @param charsPerLine Number of characters to fit on 1 line of lore
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder wrapFirst(String lore,LinearGradient gradient,int charsPerLine)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			for(String line : StringUtils.wrapColouredText(GradientUtils.applyGradient(lore,gradient)))
+			{
+				appendFirst(line);
+			}
+			
+			return this;
+		}
+		
+		/**
+		 * Wraps and appends lore to the top of the item stack in line lengths of 60
+		 * @param lore Lore to add
+		 * @param colour Colour to apply to this item name
+		 * @param charsPerLine Number of characters to fit on 1 line of lore
+		 * @return LoreBuilder
+		 */
+		public LoreBuilder wrapFirst(String lore,Color colour,int charsPerLine)
+		{
+			Objects.requireNonNull(lore,"Lore cannot be null!");
+			for(String line : StringUtils.wrapColouredText(ColourUtils.applyColour(lore,colour)))
 			{
 				appendFirst(line);
 			}
@@ -906,6 +1259,16 @@ public class ItemBuilder
 			meta.setLore(loreList);
 			stack.setItemMeta(meta);
 			return builder;
+		}
+		
+		/**
+		 * Convenient method that commits lore and creates the ItemStack,
+		 * avoiding an extra method call
+		 * @return ItemStack
+		 */
+		public ItemStack create()
+		{
+			return commit().create();
 		}
 	}
 }

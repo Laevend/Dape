@@ -6,7 +6,7 @@ import org.bukkit.command.CommandSender;
 
 import coffee.dape.Dape;
 import coffee.dape.cmdparsers.astral.annos.CommandEx;
-import coffee.dape.cmdparsers.astral.annos.Path;
+import coffee.dape.cmdparsers.astral.annos.CmdPath;
 import coffee.dape.cmdparsers.astral.annos.VMap;
 import coffee.dape.cmdparsers.astral.parser.ArgSet;
 import coffee.dape.cmdparsers.astral.parser.AstralExecutor;
@@ -44,7 +44,7 @@ public class LoggerCommand extends AstralExecutor
 		addPath("toggle writing exceptions to disk",CmdSender.ANY,new ArgSet().of("toggle").of("write-exceptions"));
 	}
 	
-	@Path(name = "toggle all verbose messages",description = "Toggles all verbose messages on/off",syntax = "/logger toggle verbose all",usage = "/logger toggle verbose all")
+	@CmdPath(name = "toggle all verbose messages",description = "Toggles all verbose messages on/off",syntax = "/logger toggle verbose all",usage = "/logger toggle verbose all")
 	public void toggleAllVerbose(CommandSender sender)
 	{
 		if(Logg.isHideVerbose())
@@ -63,7 +63,7 @@ public class LoggerCommand extends AstralExecutor
 		Dape.getConfigFile().saveConfig();
 	}
 	
-	@Path(name = "toggle verbose messages by group",description = "Toggles groups of verbose messages on/off",syntax = "/logger toggle ",usage = "/help hop mellow")
+	@CmdPath(name = "toggle verbose messages by group",description = "Toggles groups of verbose messages on/off",syntax = "/logger toggle ",usage = "/help hop mellow")
 	public void toggleVerboseByGroup(CommandSender sender,@VMap("namespace") Namespace namespace)
 	{
 		List<String> enabledVerboseGroups = (List<String>) Dape.getConfigFile().getStringList("logger.verbose.enabled_groups");
@@ -85,7 +85,7 @@ public class LoggerCommand extends AstralExecutor
 		}
 	}
 	
-	@Path(name = "toggle all warning messages",description = "Toggles warning messages on/off",syntax = "/logger toggle warnings",usage = "/logger toggle warnings")
+	@CmdPath(name = "toggle all warning messages",description = "Toggles warning messages on/off",syntax = "/logger toggle warnings",usage = "/logger toggle warnings")
 	public void toggleWarnings(CommandSender sender)
 	{
 		if(Logg.isHideErrors())
@@ -104,7 +104,7 @@ public class LoggerCommand extends AstralExecutor
 		Dape.getConfigFile().saveConfig();
 	}
 	
-	@Path(name = "toggle all error messages",description = "Toggles error messages on/off",syntax = "/logger toggle errors",usage = "/logger toggle errors")
+	@CmdPath(name = "toggle all error messages",description = "Toggles error messages on/off",syntax = "/logger toggle errors",usage = "/logger toggle errors")
 	public void toggleErrors(CommandSender sender)
 	{
 		if(Logg.isHideErrors())
@@ -123,7 +123,7 @@ public class LoggerCommand extends AstralExecutor
 		Dape.getConfigFile().saveConfig();
 	}
 	
-	@Path(name = "toggle all fatal messages",description = "Toggles warning messages on/off",syntax = "/logger toggle fatals",usage = "/logger toggle fatals")
+	@CmdPath(name = "toggle all fatal messages",description = "Toggles warning messages on/off",syntax = "/logger toggle fatals",usage = "/logger toggle fatals")
 	public void toggleFatals(CommandSender sender)
 	{
 		if(Logg.isHideErrors())
@@ -142,7 +142,7 @@ public class LoggerCommand extends AstralExecutor
 		Dape.getConfigFile().saveConfig();
 	}
 	
-	@Path(name = "toggle all exception messages",description = "Toggles warning messages on/off",syntax = "/logger toggle exceptions",usage = "/logger toggle exceptions")
+	@CmdPath(name = "toggle all exception messages",description = "Toggles warning messages on/off",syntax = "/logger toggle exceptions",usage = "/logger toggle exceptions")
 	public void toggleExceptions(CommandSender sender)
 	{
 		if(Logg.isHideErrors())
@@ -161,7 +161,7 @@ public class LoggerCommand extends AstralExecutor
 		Dape.getConfigFile().saveConfig();
 	}
 	
-	@Path(name = "toggle writing exceptions to disk",description = "Toggles writing exceptions to disk on/off",syntax = "/logger toggle write-exceptions",usage = "/logger toggle write-exceptions")
+	@CmdPath(name = "toggle writing exceptions to disk",description = "Toggles writing exceptions to disk on/off",syntax = "/logger toggle write-exceptions",usage = "/logger toggle write-exceptions")
 	public void toggleWritingExceptions(CommandSender sender)
 	{
 		if(Logg.isHideErrors())

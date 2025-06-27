@@ -4,25 +4,28 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.bukkit.Bukkit;
 
 import coffee.dape.Dape;
 import coffee.dape.config.Configurable;
-import coffee.dape.config.Configure;
+import coffee.dape.config.items.ConfigItem;
 import coffee.dape.utils.structs.Namespace;
 
 /**
  * @author Laeven
  * @since 1.0.0
  */
-public class Logg implements Configurable
+public class Logg
 {
 	public final static String DAPE_PREFIX = "&8[&cD&8]";
 	
+	private final static String debugPrefix = "&8[&7DBUG&8] ";
 	private final static String verbosePrefix = "&8[&bVERB&8] ";
 	private final static String infoPrefix = "&8[&9INFO&8] ";
 	private final static String warningPrefix = "&8[&eWARN&8] ";
@@ -75,7 +78,7 @@ public class Logg implements Configurable
 	public static void print(String s)
 	{
 		// Why the large gap? Well it's to print empty space over the '[00:00:00 INFO]:' print header
-		Bukkit.getServer().getConsoleSender().sendMessage("\r                \r[" + getTime() + "] " + ColourUtils.transCol(DAPE_PREFIX + " " + s));
+		Bukkit.getServer().getConsoleSender().sendMessage("\r                \r[" + getTime() + "] " + ColourUtils.translate(DAPE_PREFIX + " " + s));
 	}
 	
 	/**
@@ -94,50 +97,35 @@ public class Logg implements Configurable
 	public static void printFromBlank(String s)
 	{
 		// Why the large gap? Well it's to print empty space over the '[00:00:00 INFO]:' print header
-		Bukkit.getServer().getConsoleSender().sendMessage("\r                \r" + ColourUtils.transCol(s));
+		Bukkit.getServer().getConsoleSender().sendMessage("\r                \r" + ColourUtils.translate(s));
 	}
 	
 	/**
 	 * Prints an verbose message
-	 * Use this for showing variables and other messages. Useful when debugging
-	 * @param type The class this debug message is called from
-	 * @param s The message
-	 */
-	public static synchronized void printStacktrace()
-	{
-		print(verbosePrefix + getClassAndMethod(Thread.currentThread().getStackTrace()[2]) + "&2StackTrace");
-		
-		for(StackTraceElement stackTraceEle : Thread.currentThread().getStackTrace())
-		{
-			printFromBlank("    &a" + stackTraceEle.toString());
-		}
-	}
-	
-	/**
-	 * Prints an verbose message
-	 * Use this for showing variables and other messages. Useful when debugging
-	 * @param type The class this debug message is called from
-	 * @param s The message
-	 */
-	public static synchronized void callFrom()
-	{
-		print(verbosePrefix + getClassAndMethod(Thread.currentThread().getStackTrace()[2]) + "&2" + "CalledFrom " + getClassAndMethod(Thread.currentThread().getStackTrace()[4]));
-	}
-	
-	/**
-	 * Prints an verbose message
-	 * Use this for showing variables and other messages. Useful when debugging
-	 * @param type The class this debug message is called from
+	 * <p>
+	 * Use this for showing variables and other messages.
 	 * @param s The message
 	 * @param verboseGroup Group this message belongs to
 	 */
 	public static synchronized void verb(String s,Namespace verboseGroup)
-	{		
-		if(!verboseGroups.contains(verboseGroup)) { verboseGroups.add(verboseGroup); }
+	{
 		if(hideVerbose) { return; }
+		//if(!enabledVerboseGroups.contains(verboseGroup)) { return; }
 		
-		if(!enabledVerboseGroups.contains(verboseGroup)) { return; }
 		print(verbosePrefix + getClassAndMethod(Thread.currentThread().getStackTrace()[2]) + "&b" + s);
+	}
+	
+	/**
+	 * Prints an temporary debug message.
+	 * <p>
+	 * Use this for showing variables and other messages.
+	 * <p>
+	 * These should be removed in a production build and are only meant to exist to help with debugging efforts
+	 * @param s The message
+	 */
+	public static synchronized void debug(String s)
+	{
+		print(debugPrefix + getClassAndMethod(Thread.currentThread().getStackTrace()[2]) + "&b" + s);
 	}
 	
 	/**
@@ -244,10 +232,13 @@ public class Logg implements Configurable
 	 * Prints an fatal message with an exception
 	 * 
 	 * <p>Presents information to the console about an important action that failed. Requires immediate attention of operators</p>
-	 * @param s The message
+	 * @param s The error message
 	 */
 	public static synchronized void fatal(String s,Exception e)
 	{
+		Objects.requireNonNull(s,"Fatal message cannot be null!");
+		Objects.requireNonNull(e,"Fatal exception cannot be null!");
+		
 		if(!hideFatals)
 		{
 			// This message is designed to get operators attention in the console
@@ -268,11 +259,27 @@ public class Logg implements Configurable
 	}
 	
 	/**
+	 * Throws an illegal argument exception with an error message
+	 * 
+	 * <p>Presents information to the console about a bad argument.</p>
+	 * @param s The error message
+	 */
+	public static synchronized void throwIllegalArgumentError(String s)
+	{
+		Objects.requireNonNull(s,"Error message cannot be null!");
+		
+		print(errorPrefix + getClassAndMethod(Thread.currentThread().getStackTrace()[2]) + "&c" + s);
+		throw new IllegalArgumentException(s);
+	}
+	
+	/**
 	 * Prints a title in the console (useful for important messages)
 	 * @param s The title
 	 */
 	public static synchronized void title(String s)
 	{
+		Objects.requireNonNull(s,"Title string cannot be null!");
+		
 		print();
 		print(s);
 		print();;
@@ -412,7 +419,7 @@ public class Logg implements Configurable
 		public static synchronized void printOk(String componentType,String action,String componentBeingInitialisedName)
 		{
 			// Why the large gap? Well it's to print empty space over the '[00:00:00 INFO]:' print header
-			Bukkit.getServer().getConsoleSender().sendMessage("\r                \r[" + getTime() + "] " + ColourUtils.transCol(PREFIX_OK + "&3" + componentType + " &8> &6" + action + " &8> &r" + componentBeingInitialisedName));
+			Bukkit.getServer().getConsoleSender().sendMessage("\r                \r[" + getTime() + "] " + ColourUtils.translate(PREFIX_OK + "&3" + componentType + " &8> &6" + action + " &8> &r" + componentBeingInitialisedName));
 		}
 		
 		/**
@@ -424,24 +431,24 @@ public class Logg implements Configurable
 		public static synchronized void printFail(String componentType,String action,String componentBeingInitialisedName)
 		{
 			// Why the large gap? Well it's to print empty space over the '[00:00:00 INFO]:' print header
-			Bukkit.getServer().getConsoleSender().sendMessage("\r                \r[" + getTime() + "] " + ColourUtils.transCol(PREFIX_FAIL + "&3" + componentType + " &8> &6" + action + " &8> &c" + componentBeingInitialisedName));
+			Bukkit.getServer().getConsoleSender().sendMessage("\r                \r[" + getTime() + "] " + ColourUtils.translate(PREFIX_FAIL + "&3" + componentType + " &8> &6" + action + " &8> &c" + componentBeingInitialisedName));
 		}
 	}
 	
-	@Configure
-	public static Map<String,Object> getDefaults()
+	public static class Config implements Configurable
 	{
-		return Map.of("logger.hide_verbose.all",false,
-				  "logger.hide_warnings",false,
-				  "logger.hide_errors",false,
-				  "logger.hide_fatals",false,
-				  "logger.hide_exceptions",false,
-				  "logger.write_exceptions",false,
-				  // Spigot does not respect \r, as such we can't achieve a message only displaying the time and not the [Server thread/INFO]: crap that's not needed
-				  "logger.use_shorter_print_prefix",true);
+		public static final ConfigItem<Boolean> HIDE_ALL_VERBOSE = new ConfigItem<>("logger.hide_verbose.all",false,"If all verbose messages should be hidden.");
+		public static final ConfigItem<Boolean> HIDE_WARNINGS = new ConfigItem<>("logger.hide_warnings",false,"If all warning messages should be hidden.");
+		public static final ConfigItem<Boolean> HIDE_ERRORS = new ConfigItem<>("logger.hide_errors",false,"If all errors messages should be hidden.");
+		public static final ConfigItem<Boolean> HIDE_FATALS = new ConfigItem<>("logger.hide_fatals",false,"If all fatal messages should be hidden.");
+		public static final ConfigItem<Boolean> HIDE_EXCEPTIONS = new ConfigItem<>("logger.hide_exceptions",false,"If all caught exceptions should be hidden.");
+		public static final ConfigItem<Boolean> WRITE_EXCEPTIONS = new ConfigItem<>("logger.write_exceptions",false,"If exceptions should be written to disk.");
+		public static final ConfigItem<Boolean> USE_SHORTER_PRINT_PREFIX = new ConfigItem<>("logger.use_shorter_print_prefix",true,"If the shorter print prefix should be used." + 
+				" Spigot does not respect \r, as such we can't achieve a message only displaying the time and not the [Server thread/INFO]: crap that's not needed");
+		public static final ConfigItem<List<String>> ENABLED_VERBOSE_GROUPS = new ConfigItem<>("logger.verbose.enabled_groups",Collections.emptyList(),"List of verbose groups that are enabled.");
 	}
 	
-	public void registerVerboseLogGroup(Namespace logGroup)
+	public static void registerVerboseLogGroup(Namespace logGroup)
 	{
 		verboseGroups.add(logGroup);
 	}
@@ -456,6 +463,8 @@ public class Logg implements Configurable
 		public static final Namespace ELEVATED_ACCOUNT = Namespace.of(Dape.getNamespaceName(),"Elevated_Account");
 		public static final Namespace CHAOS_UI = Namespace.of(Dape.getNamespaceName(),"Chaos_UI");
 		public static final Namespace COMMANDS = Namespace.of(Dape.getNamespaceName(),"Commands");
+		public static final Namespace CLOCKS = Namespace.of(Dape.getNamespaceName(),"Clocks");
+		public static final Namespace PLAYER_DATA = Namespace.of(Dape.getNamespaceName(),"Player_Data");
 		
 		public static final Namespace MAP_UTILS = Namespace.of(Dape.getNamespaceName(),"Map_Utils");
 		public static final Namespace TIME_UTILS = Namespace.of(Dape.getNamespaceName(),"Time_Utils");

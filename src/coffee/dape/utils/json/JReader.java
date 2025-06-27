@@ -2,8 +2,6 @@ package coffee.dape.utils.json;
 
 import java.io.File;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -17,23 +15,13 @@ import coffee.dape.exception.MissingJsonAttributeException;
  */
 public abstract class JReader<T>
 {
-	private static GsonBuilder builder;
-	private static Gson gson;
-	
 	// Source name can be custom or the filename
 	private String sourceName;
 	public JsonObject obj;
 	
-	static
-	{
-		builder = new GsonBuilder();
-		builder.setPrettyPrinting();
-		gson = builder.create();
-	}
-	
 	public T fromJson(File file)
 	{
-		this.obj = gson.toJsonTree(JsonUtils.fromJsonFile(file.getPath())).getAsJsonObject();
+		this.obj = JUtils.readToObject(file.toPath());
 		this.sourceName = file.getName() != null ? file.getName() : "unknown";
 		
 		try
@@ -50,7 +38,7 @@ public abstract class JReader<T>
 	
 	public T fromJson(String sourceName,String json)
 	{
-		this.obj = gson.toJsonTree(JsonUtils.fromJsonString(json)).getAsJsonObject();
+		this.obj = JUtils.toJsonObject(json);
 		this.sourceName = sourceName;
 		
 		try
@@ -87,7 +75,7 @@ public abstract class JReader<T>
 	@SuppressWarnings("unchecked")
 	public T fromJson(File file,Object... args)
 	{
-		this.obj = gson.toJsonTree(JsonUtils.fromJsonFile(file.getPath())).getAsJsonObject();
+		this.obj = JUtils.readToObject(file.toPath());
 		this.sourceName = file.getName() != null ? file.getName() : "unknown";
 		
 		try
@@ -107,7 +95,7 @@ public abstract class JReader<T>
 	@SuppressWarnings("unchecked")
 	public T fromJson(String sourceName,String json,Object... args)
 	{
-		this.obj = gson.toJsonTree(JsonUtils.fromJsonString(json)).getAsJsonObject();
+		this.obj = JUtils.toJsonObject(json);
 		this.sourceName = sourceName;
 		
 		try

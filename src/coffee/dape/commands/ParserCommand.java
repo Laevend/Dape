@@ -4,7 +4,7 @@ import org.bukkit.command.CommandSender;
 
 import coffee.dape.cmdparsers.astral.annos.CommandEx;
 import coffee.dape.cmdparsers.astral.annos.Elevated;
-import coffee.dape.cmdparsers.astral.annos.Path;
+import coffee.dape.cmdparsers.astral.annos.CmdPath;
 import coffee.dape.cmdparsers.astral.annos.VMap;
 import coffee.dape.cmdparsers.astral.parser.ArgSet;
 import coffee.dape.cmdparsers.astral.parser.AstralExecutor;
@@ -38,14 +38,14 @@ public class ParserCommand extends AstralExecutor
 		addPath("print path details",CmdSender.ANY,new ArgSet().of("<commands>",ArgTypes.STRING,Suggestions.commandNames()).mapTo("cmdName").of(0,Suggestions.commandPathIndexes()).mapTo("cmdIndex"));
 	}
 	
-	@Path(name = "print cmd tree",description = "Prints a commands tree.",syntax = "/parser print-tree <command>",usage = "/parser print-tree itembuilder")
+	@CmdPath(name = "print cmd tree",description = "Prints a commands tree.",syntax = "/parser print-tree <command>",usage = "/parser print-tree itembuilder")
 	public void printTree(CommandSender sender,@VMap("cmdName") String cmdName)
 	{
 		AstralExecutor executor = CommandFactory.getAstralCommandMap().get(cmdName);
 		Logg.verb("Command Tree: " + cmdName + "\n" + executor.getArgTree().toString(),Logg.VerbGroup.COMMANDS);
 	}
 	
-	@Path(name = "print paths of command",description = "Displays information about a command",syntax = "/parser <command>",usage = "/parser parser")
+	@CmdPath(name = "print paths of command",description = "Displays information about a command",syntax = "/parser <command>",usage = "/parser parser")
 	public void viewCommand(CommandSender sender,@VMap("cmdName") String cmdName)
 	{
 		if(!CommandFactory.getAstralCommandMap().keySet().contains(cmdName))
@@ -89,7 +89,7 @@ public class ParserCommand extends AstralExecutor
 		PrintUtils.raw(sender,PrintUtils.getDivider());
 	}
 	
-	@Path(name = "print path details",description = "Displays detail about a command path",syntax = "parser <command> <path>",usage = "/parser parser 1")
+	@CmdPath(name = "print path details",description = "Displays detail about a command path",syntax = "parser <command> <path>",usage = "/parser parser 1")
 	public void viewPathOfCommand(CommandSender sender,@VMap("cmdName") String cmdName,@VMap("cmdIndex") int cmdIndex)
 	{
 		if(!CommandFactory.getAstralCommandMap().keySet().contains(cmdName))

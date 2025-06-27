@@ -129,10 +129,10 @@ public abstract class ChaosHandler
 		
 		GUISession sess = ChaosFactory.getSession((Player) e.getWhoClicked());
 		
-		// Check for temporary slot occupancy and execute action listeners (if any)
-		if(sess.isTempSlotOccupied(e.getRawSlot()))
+		// Check for session slot occupancy and execute action listeners (if any)
+		if(sess.isSessionSlotOccupied(e.getRawSlot()))
 		{
-			ChaosComponent comp = sess.getTempSlots().get(e.getRawSlot()).getSlotComponent();
+			ChaosComponent comp = sess.getSessionSlots().get(e.getRawSlot()).getSlotComponent();
 			
 			handleComponent(e,comp,builder,region);
 			

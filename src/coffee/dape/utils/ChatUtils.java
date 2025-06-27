@@ -40,6 +40,7 @@ public class ChatUtils
 	
 	// Map<Namespace:HandlerName,InputListener>
 	private static final Map<Namespace,ChatInputHandler> listeners = new HashMap<>();
+	private static final Map<Namespace,ChatInputHandler> tempListeners = new HashMap<>();
 	
 	/**
 	 * Initialises chat input handlers
@@ -136,6 +137,17 @@ public class ChatUtils
 		listeners.remove(namespace);
 	}
 	
+	/**
+	 * Convenient method for manually adding  input listener.
+	 * Used for a use case where a static @InputHandler value doesn't work because the handler value needs to be specific to the instance of the object its in OR its temporary 
+	 * @param namespace Namespace for this listener
+	 * @param handler ChatInputHandler for this listener
+	 */
+	public void addTempInputListener(Namespace namespace,ChatInputHandler handler)
+	{
+		listeners.putIfAbsent(namespace,handler);
+	}
+	
 	public Map<Namespace,ChatInputHandler> getListeners()
 	{
 		return listeners;
@@ -152,6 +164,7 @@ public class ChatUtils
 	{
 		Objects.requireNonNull(p,"Player cannot be null!");
 		Objects.requireNonNull(message,"Message cannot be null!");
+		Objects.requireNonNull(handlerName,"Handler name cannot be null!");
 		
 		// Remove existing session
 		if(inputSessions.contains(p.getUniqueId()))
@@ -160,7 +173,9 @@ public class ChatUtils
 		}
 		
 		inputSessions.put(p.getUniqueId(),new ChatInputSession(p.getUniqueId(),handlerName));
+		
 		PrintUtils.info(p,message);
+		
 		return inputSessions.get(p.getUniqueId()).getInputSessionId();
 	}
 	
@@ -195,7 +210,7 @@ public class ChatUtils
 			// Call ChatInputEvent synchronously
 			DelayUtils.executeDelayedTask(() ->
 			{
-				if(!listeners.containsKey(handlerToCall))
+				if(!listeners.containsKey(handlerToCall) && !(tempListeners.containsKey(handlerToCall)))
 				{
 					PrintUtils.error(e.getPlayer(),"An error occured attempting to read your input!");
 					Logg.error("Could not handle chat input as handler '" + handlerToCall + "' doesn't exist!");
@@ -203,7 +218,6 @@ public class ChatUtils
 				else
 				{
 					listeners.get(handlerToCall).callHandler(handlerToCall,new ChatInputEvent(e.getPlayer(),e.getMessage(),this.inputSessionId,this.owner));
-					//Bukkit.getPluginManager().callEvent(new ChatInputEvent(e.getPlayer(),e.getMessage(),this.inputSessionId,this.owner));
 				}
 			});
 			
@@ -238,5 +252,9 @@ public class ChatUtils
 	{
 		public static final String ELEVATED_ACCOUNTS_CONSOLE_SETUP = "ElevatedAccountsConsoleSetup";
 		public static final String ELEVATED_ACCOUNTS_VIEW_SECRET = "ElevatedAccountsViewSecret";
+		
+		public static final String ELEVATED_ACCOUNTS_AUTH_METHOD_SETUP_STATIC_PIN = "ElevatedAccountsAuthMethodSetupStaticPin";
+		public static final String ELEVATED_ACCOUNTS_AUTH_METHOD_SETUP_TOTP = "ElevatedAccountsAuthMethodSetupTOTP";
+		public static final String ELEVATED_ACCOUNTS_AUTH_METHOD_SETUP_EMAIL_OTP = "ElevatedAccountsAuthMethodSetupEmailOTP";
 	}
 }

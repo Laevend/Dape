@@ -24,14 +24,14 @@ public class ConfirmationTextInputGuiBuilder extends ChaosBuilder
 	@Override
 	public void init()
 	{
-		setStaticComponent(new Button(4,ItemBuilder.of(HeadUtils.EXCLAMATION_MARK.clone())
+		putStaticComponent(new Button(4,ItemBuilder.of(HeadUtils.EXCLAMATION_MARK.clone())
 				.name("Confirmation",ColourUtils.VISTA_BLUE)
 				.lore()
 				.wrap(ColourUtils.applyColour("To confirm your choice, you must type a phrase.",ColourUtils.TEXT))
 				.commit()
 				.create()));
 		
-		setStaticComponent(new Button(10,ItemBuilder.of(Material.RED_STAINED_GLASS_PANE)
+		putStaticComponent(new Button(10,ItemBuilder.of(Material.RED_STAINED_GLASS_PANE)
 				.name("Cancel",ColourUtils.TEXT_ERROR)
 				.create(),new ChaosActionListener()
 		{
@@ -57,8 +57,8 @@ public class ConfirmationTextInputGuiBuilder extends ChaosBuilder
 		String confirmMsg = sess.getData(this,"confirm_msg").getAsString();
 		String confirmPhrase = sess.getData(this,"confirm_phrase").getAsString();
 		
-		sess.setTempComponent(new TextInputButton(16,"Confirmation Phrase",confirmMsg,"Enter phrase '" + confirmPhrase + "' to confirm","",Material.NAME_TAG));
+		sess.setSessionComponent(new TextInputButton(16,"Confirmation Phrase",confirmMsg,"Enter phrase '" + confirmPhrase + "' to confirm","",Material.NAME_TAG));
 		
-		view.setItem(16,sess.getTempSlots().get(16).getSlotComponent().getAppearance());
+		view.setItem(16,sess.getSessionSlots().get(16).getSlotComponent().getAppearance());
 	}
 }

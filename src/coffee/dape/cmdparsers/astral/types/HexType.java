@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 /**
  * @author Laeven
  * 
- * This class defines the Hex type
+ * This class defines the Hex argument type
  */
 public class HexType extends ArgumentType
 {	
